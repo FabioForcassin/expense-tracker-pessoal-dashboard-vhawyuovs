@@ -6,11 +6,13 @@ import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function KPICards() {
-  const { expenses, currentMonth, selectedPrimaryCat, categories, selectedSecondaryCats } =
+  const { expenses, selectedMonths, selectedPrimaryCat, categories, selectedSecondaryCats } =
     useDashboard()
 
-  // Filter expenses by month
-  let filteredTransactions = expenses.filter((e) => e.date.startsWith(currentMonth))
+  // Filter expenses by selected months
+  let filteredTransactions = expenses.filter((e) =>
+    selectedMonths.some((m) => e.date.startsWith(m)),
+  )
 
   // Apply category filters
   if (selectedPrimaryCat) {
@@ -54,7 +56,7 @@ export function KPICards() {
           <div className="text-2xl md:text-3xl font-bold tracking-tight text-success mb-3">
             {formatCurrency(totalReceitas)}
           </div>
-          <p className="text-xs font-medium text-muted-foreground">Entradas no mês atual</p>
+          <p className="text-xs font-medium text-muted-foreground">Entradas no período</p>
         </CardContent>
       </Card>
 

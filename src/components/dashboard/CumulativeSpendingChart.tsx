@@ -9,26 +9,24 @@ import {
 } from 'recharts'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { formatCurrency } from '@/lib/format'
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 
 export function CumulativeSpendingChart() {
-  const { expenses, currentMonth, selectedPrimaryCat, selectedSecondaryCats, categories } =
+  const { expenses, selectedMonths, selectedPrimaryCat, selectedSecondaryCats, categories } =
     useDashboard()
 
-  const allMonthExpenses = expenses.filter((e) => e.date.startsWith(currentMonth))
+  const allMonthExpenses = expenses.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
   const totalReceitas =
     allMonthExpenses
       .filter((e) => e.primaryCategory === 'Receitas')
       .reduce((sum, e) => sum + e.value, 0) || 10000
 
   let filteredExpenses = allMonthExpenses.filter((e) => e.primaryCategory !== 'Receitas')
-
   let activeBudget = totalReceitas
 
   if (selectedPrimaryCat && selectedPrimaryCat !== 'cat_receitas') {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
     filteredExpenses = filteredExpenses.filter((e) => e.primaryCategory === cat?.name)
-    // Estimate budget for specific category if selected
     activeBudget = totalReceitas * 0.2
 
     if (selectedSecondaryCats.length > 0) {
@@ -39,8 +37,8 @@ export function CumulativeSpendingChart() {
     }
   }
 
-  const [year, month] = currentMonth.split('-').map(Number)
-  const daysInMonth = new Date(year, month, 0).getDate()
+  // Calculate days in month (max of selected months or standard 31)
+  const daysInMonth = 31
 
   const data = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1
@@ -51,33 +49,18 @@ export function CumulativeSpendingChart() {
     return { day, cumulative, ideal }
   })
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
-      return (
-        <div className="bg-background/90 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl text-sm z-50">
-          <p className="font-semibold mb-2">Dia {label}</p>
-          {payload.map((entry: any) => (
-            <div key={entry.name} className="flex items-center justify-between gap-4 mb-1">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <div className="w-2 h-0.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                {entry.name === 'cumulative' ? 'Acumulado (Real)' : 'Ritmo Seguro (Base Receita)'}
-              </span>
-              <span className="font-medium text-foreground">{formatCurrency(entry.value)}</span>
-            </div>
-          ))}
-        </div>
-      )
-    }
-    return null
+  const chartConfig = {
+    cumulative: { label: 'Acumulado', color: 'hsl(var(--primary))' },
+    ideal: { label: 'Ritmo Seguro', color: 'hsl(var(--success)/0.5)' },
   }
 
   return (
-    <Card className="glass mb-6">
+    <Card className="glass mb-6 w-full h-full flex flex-col">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Evolução Diária do Gasto</CardTitle>
+        <CardTitle className="text-base font-semibold">Evolução de Gastos (Dias do Mês)</CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="h-[260px] w-full mt-4">
+      <CardContent className="flex-1 w-full min-h-[260px]">
+        <ChartContainer config={chartConfig} className="h-full w-full mt-4">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <CartesianGrid
@@ -104,17 +87,17 @@ export function CumulativeSpendingChart() {
                 className="text-xs font-medium"
                 tick={{ fill: 'hsl(var(--muted-foreground))' }}
               />
-              <Tooltip content={<CustomTooltip />} />
+              <Tooltip content={<ChartTooltipContent />} />
               <Line
                 type="monotone"
                 dataKey="cumulative"
                 name="cumulative"
-                stroke="hsl(var(--primary))"
+                stroke="var(--color-cumulative)"
                 strokeWidth={3}
                 dot={false}
                 activeDot={{
                   r: 6,
-                  fill: 'hsl(var(--primary))',
+                  fill: 'var(--color-cumulative)',
                   stroke: 'hsl(var(--background))',
                   strokeWidth: 2,
                 }}
@@ -123,14 +106,14 @@ export function CumulativeSpendingChart() {
                 type="dashed"
                 dataKey="ideal"
                 name="ideal"
-                stroke="hsl(var(--success)/0.5)"
+                stroke="var(--color-ideal)"
                 strokeWidth={2}
                 strokeDasharray="6 6"
                 dot={false}
               />
             </LineChart>
           </ResponsiveContainer>
-        </div>
+        </ChartContainer>
       </CardContent>
     </Card>
   )

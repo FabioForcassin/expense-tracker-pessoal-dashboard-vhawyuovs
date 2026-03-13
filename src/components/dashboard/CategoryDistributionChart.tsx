@@ -1,19 +1,20 @@
 import { Pie, PieChart, Tooltip, Cell, ResponsiveContainer } from 'recharts'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 import { formatCurrency } from '@/lib/format'
 
 export function CategoryDistributionChart() {
-  const { categories, expenses, selectedPrimaryCat, currentMonth } = useDashboard()
+  const { categories, expenses, selectedPrimaryCat, selectedMonths } = useDashboard()
 
   const filteredExpenses = expenses.filter(
-    (e) => e.date.startsWith(currentMonth) && e.primaryCategory !== 'Receitas',
+    (e) => selectedMonths.some((m) => e.date.startsWith(m)) && e.primaryCategory !== 'Receitas',
   )
 
-  let data = []
+  let rawData = []
 
   if (!selectedPrimaryCat || selectedPrimaryCat === 'cat_receitas') {
-    data = categories
+    rawData = categories
       .filter((c) => c.name !== 'Receitas')
       .map((c) => ({
         name: c.name,
@@ -27,7 +28,7 @@ export function CategoryDistributionChart() {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
     if (cat && cat.name !== 'Receitas') {
       const baseHue = 262
-      data = cat.subcategories
+      rawData = cat.subcategories
         .map((sub, idx) => ({
           name: sub,
           value: filteredExpenses
@@ -39,27 +40,14 @@ export function CategoryDistributionChart() {
     }
   }
 
-  const total = data.reduce((a, b) => a + b.value, 0)
+  const chartConfig: Record<string, any> = {}
+  const data = rawData.map((d, i) => {
+    const key = `cat_${i}`
+    chartConfig[key] = { label: d.name, color: d.color }
+    return { ...d, fill: `var(--color-${key})` }
+  })
 
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload
-      const percentage = total > 0 ? ((data.value / total) * 100).toFixed(1) : 0
-      return (
-        <div className="bg-background/90 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl text-sm flex flex-col gap-1 z-50">
-          <div className="flex items-center gap-2">
-            <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: data.color }} />
-            <span className="font-semibold">{data.name}</span>
-          </div>
-          <div className="flex justify-between items-center gap-4 mt-1 pl-4">
-            <span className="text-foreground font-medium">{formatCurrency(data.value)}</span>
-            <span className="text-muted-foreground text-xs">{percentage}%</span>
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
+  const total = data.reduce((a, b) => a + b.value, 0)
 
   if (total === 0) {
     return (
@@ -68,7 +56,7 @@ export function CategoryDistributionChart() {
           <CardTitle className="text-base font-semibold">Distribuição</CardTitle>
         </CardHeader>
         <CardContent className="flex-1 flex items-center justify-center min-h-[250px]">
-          <p className="text-muted-foreground text-sm">Sem despesas.</p>
+          <p className="text-muted-foreground text-sm">Sem despesas no período.</p>
         </CardContent>
       </Card>
     )
@@ -79,26 +67,28 @@ export function CategoryDistributionChart() {
       <CardHeader className="pb-0">
         <CardTitle className="text-base font-semibold">Composição de Gastos</CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col justify-center pb-6 min-h-[250px] relative">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Tooltip content={<CustomTooltip />} />
-            <Pie
-              data={data}
-              dataKey="value"
-              nameKey="name"
-              innerRadius="65%"
-              outerRadius="90%"
-              strokeWidth={4}
-              stroke="hsl(var(--background))"
-              paddingAngle={2}
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-          </PieChart>
-        </ResponsiveContainer>
+      <CardContent className="flex-1 flex flex-col justify-center pb-6 min-h-[250px] relative w-full">
+        <ChartContainer config={chartConfig} className="h-full w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Tooltip content={<ChartTooltipContent hideLabel />} />
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius="65%"
+                outerRadius="90%"
+                strokeWidth={4}
+                stroke="hsl(var(--background))"
+                paddingAngle={2}
+              >
+                {data.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+              </Pie>
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartContainer>
 
         <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
           <span className="text-xl font-bold tracking-tight text-foreground">

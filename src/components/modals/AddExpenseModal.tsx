@@ -48,7 +48,7 @@ export function AddExpenseModal({
       resetForm()
       if (defaultTab === 'income') {
         setPrimaryCat('Receitas')
-        setType('Variável') // Implicit type for income
+        setType('Variável')
       }
     }
   }, [open, defaultTab])
@@ -111,8 +111,8 @@ export function AddExpenseModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] glass p-0 overflow-hidden">
-        <div className="p-6 pb-2">
+      <DialogContent className="w-[95vw] sm:max-w-[500px] glass p-0 overflow-hidden">
+        <div className="p-4 sm:p-6 pb-2">
           <DialogHeader>
             <DialogTitle className="text-xl">Nova Transação</DialogTitle>
             <DialogDescription>Insira os detalhes para registro no painel.</DialogDescription>
@@ -152,8 +152,11 @@ export function AddExpenseModal({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 pb-6 grid gap-5 overflow-y-auto max-h-[70vh]">
-          <div className="grid grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="px-4 sm:px-6 pb-6 grid gap-5 overflow-y-auto max-h-[70vh]"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label>Valor (R$)</Label>
               <Input
@@ -182,9 +185,9 @@ export function AddExpenseModal({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
-              <Label>Categoria</Label>
+              <Label>Categoria Principal</Label>
               <Select
                 value={primaryCat}
                 onValueChange={(v) => {
@@ -228,10 +231,10 @@ export function AddExpenseModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {tab === 'expense' && (
               <div className="grid gap-2">
-                <Label>Tipo</Label>
+                <Label>Tipo de Gasto</Label>
                 <Select value={type} onValueChange={(v: any) => setType(v)} required>
                   <SelectTrigger>
                     <SelectValue />
@@ -243,7 +246,7 @@ export function AddExpenseModal({
                 </Select>
               </div>
             )}
-            <div className={cn('grid gap-2', tab === 'income' ? 'col-span-2' : '')}>
+            <div className={cn('grid gap-2', tab === 'income' ? 'sm:col-span-2' : '')}>
               <Label>Forma de Pagamento</Label>
               <Select value={payment} onValueChange={setPayment} required>
                 <SelectTrigger>

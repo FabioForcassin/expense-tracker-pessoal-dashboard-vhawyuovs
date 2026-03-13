@@ -13,10 +13,12 @@ import { formatCurrency, formatDate } from '@/lib/format'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 
 export function TransactionsTable({ full = false }: { full?: boolean }) {
-  const { expenses, currentMonth, selectedPrimaryCat, selectedSecondaryCats, categories } =
+  const { expenses, selectedMonths, selectedPrimaryCat, selectedSecondaryCats, categories } =
     useDashboard()
 
-  let filteredTransactions = expenses.filter((e) => e.date.startsWith(currentMonth))
+  let filteredTransactions = expenses.filter((e) =>
+    selectedMonths.some((m) => e.date.startsWith(m)),
+  )
 
   if (selectedPrimaryCat) {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
@@ -55,7 +57,7 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
             {finalData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  Nenhuma transação encontrada.
+                  Nenhuma transação encontrada no período.
                 </TableCell>
               </TableRow>
             ) : (

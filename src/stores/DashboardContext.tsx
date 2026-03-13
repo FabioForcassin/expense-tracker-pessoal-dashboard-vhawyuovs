@@ -220,6 +220,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
 ]
 
 const INITIAL_EXPENSES: Expense[] = [
+  // Receitas Históricas
   {
     id: '100',
     date: '2024-03-01',
@@ -251,6 +252,22 @@ const INITIAL_EXPENSES: Expense[] = [
     who: 'Fabio',
   },
   {
+    id: '102',
+    date: '2024-02-01',
+    monthNum: 2,
+    competency: 'Fev',
+    establishment: 'Empresa S.A',
+    primaryCategory: 'Receitas',
+    secondaryCategory: 'Salário',
+    type: 'Receita',
+    paymentMethod: 'Itaú',
+    value: 12500.0,
+    comment: 'Salário Mensal',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
+  // Despesas Históricas
+  {
     id: '1',
     date: '2024-03-02',
     monthNum: 3,
@@ -262,21 +279,6 @@ const INITIAL_EXPENSES: Expense[] = [
     paymentMethod: 'CC Itaú visa infinity',
     value: 850.5,
     comment: 'Compra do mês',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '2',
-    date: '2024-03-05',
-    monthNum: 3,
-    competency: 'Mar',
-    establishment: 'Uber',
-    primaryCategory: 'Transporte',
-    secondaryCategory: 'Táxi/Uber/99',
-    type: 'Variável',
-    paymentMethod: 'CC Nubank master',
-    value: 55.0,
-    comment: 'Volta do trabalho',
     classification: 'Pessoal',
     who: 'Fabio',
   },
@@ -297,9 +299,9 @@ const INITIAL_EXPENSES: Expense[] = [
   },
   {
     id: '4',
-    date: '2024-03-12',
-    monthNum: 3,
-    competency: 'Mar',
+    date: '2024-02-12',
+    monthNum: 2,
+    competency: 'Fev',
     establishment: 'Netflix',
     primaryCategory: 'Moradia',
     secondaryCategory: 'Streamings',
@@ -312,31 +314,31 @@ const INITIAL_EXPENSES: Expense[] = [
   },
   {
     id: '5',
-    date: '2024-03-15',
-    monthNum: 3,
-    competency: 'Mar',
+    date: '2024-02-15',
+    monthNum: 2,
+    competency: 'Fev',
     establishment: 'Drogasil',
     primaryCategory: 'Saúde',
     secondaryCategory: 'Medicamentos/Farmácia',
     type: 'Variável',
     paymentMethod: 'CC Itaú visa infinity',
-    value: 125.9,
+    value: 225.9,
     comment: 'Remédios',
     classification: 'Pessoal',
     who: 'Fabio',
   },
   {
     id: '6',
-    date: '2024-03-18',
-    monthNum: 3,
-    competency: 'Mar',
+    date: '2024-01-18',
+    monthNum: 1,
+    competency: 'Jan',
     establishment: 'Enel',
     primaryCategory: 'Moradia',
     secondaryCategory: 'Luz',
     type: 'Variável',
     paymentMethod: 'Itaú',
-    value: 210.0,
-    comment: 'Luz fev',
+    value: 310.0,
+    comment: 'Luz Jan',
     classification: 'Pessoal',
     who: 'Fabio',
   },
@@ -372,9 +374,9 @@ const INITIAL_EXPENSES: Expense[] = [
   },
   {
     id: '9',
-    date: '2024-03-28',
-    monthNum: 3,
-    competency: 'Mar',
+    date: '2024-01-28',
+    monthNum: 1,
+    competency: 'Jan',
     establishment: 'SmartFit',
     primaryCategory: 'Pessoal',
     secondaryCategory: 'Academia',
@@ -390,8 +392,8 @@ const INITIAL_EXPENSES: Expense[] = [
 interface DashboardContextType {
   categories: AppCategory[]
   expenses: Expense[]
-  currentMonth: string
-  setCurrentMonth: (m: string) => void
+  selectedMonths: string[]
+  setSelectedMonths: (m: string[]) => void
   selectedPrimaryCat: string | null
   setSelectedPrimaryCat: (id: string | null) => void
   selectedSecondaryCats: string[]
@@ -404,7 +406,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [categories] = useState<AppCategory[]>(INITIAL_CATEGORIES)
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES)
-  const [currentMonth, setCurrentMonth] = useState('2024-03')
+  const [selectedMonths, setSelectedMonths] = useState<string[]>(['2024-03'])
   const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
   const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
 
@@ -429,8 +431,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       value={{
         categories,
         expenses,
-        currentMonth,
-        setCurrentMonth,
+        selectedMonths,
+        setSelectedMonths,
         selectedPrimaryCat,
         setSelectedPrimaryCat: handleSetPrimaryCat,
         selectedSecondaryCats,
