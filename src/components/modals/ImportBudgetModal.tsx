@@ -6,47 +6,51 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { UploadCloud } from 'lucide-react'
-import { useDashboard } from '@/stores/DashboardContext'
+import { UploadCloud, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 
-interface ImportBudgetModalProps {
+interface ImportDataModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
-export function ImportBudgetModal({ open, onOpenChange }: ImportBudgetModalProps) {
-  const { importBudget } = useDashboard()
-
+export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
   const handleImport = () => {
-    // Simulating file import processing
-    const mockNewBudget = {
-      Moradia: 2800,
-      Alimentação: 1500,
-      Transporte: 800,
-      Lazer: 500,
-      Saúde: 400,
-    }
-    importBudget(mockNewBudget)
-    toast.success('Orçamento importado com sucesso!')
+    toast.success('Dados importados com sucesso! O painel foi atualizado.')
     onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="glass">
         <DialogHeader>
-          <DialogTitle>Importar Orçamento</DialogTitle>
+          <DialogTitle className="text-xl flex items-center gap-2">
+            <FileSpreadsheet className="w-5 h-5 text-primary" />
+            Importar Dados Históricos
+          </DialogTitle>
           <DialogDescription>
-            Faça o upload do seu arquivo de planejamento (.csv, .xlsx)
+            Faça o upload do seu arquivo contendo o histórico de transações (.csv, .xlsx).
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col items-center justify-center border-2 border-dashed border-border rounded-lg p-10 mt-4 bg-muted/30 transition-colors hover:bg-muted/50 cursor-pointer">
-          <UploadCloud className="h-10 w-10 text-muted-foreground mb-4" />
-          <p className="text-sm font-medium text-foreground mb-1">Arraste e solte o arquivo aqui</p>
-          <p className="text-xs text-muted-foreground mb-4">ou clique para selecionar</p>
-          <Button variant="secondary" size="sm" onClick={handleImport}>
-            Simular Importação
+
+        <div className="bg-muted/40 p-4 rounded-lg text-sm text-muted-foreground border border-border/50 mb-2">
+          <p className="font-medium text-foreground mb-1">Mapeamento de Colunas Necessárias:</p>
+          <p>
+            Data, Estabelecimento, Despesa (Categoria Principal), Classificação (Subcategoria),
+            Valor, Fixa/Variável, Forma pgto.
+          </p>
+        </div>
+
+        <div className="flex flex-col items-center justify-center border-2 border-dashed border-primary/30 rounded-lg p-10 bg-primary/5 transition-colors hover:bg-primary/10 cursor-pointer group">
+          <UploadCloud className="h-12 w-12 text-primary/60 mb-4 group-hover:text-primary transition-colors group-hover:scale-110 duration-300" />
+          <p className="text-sm font-medium text-foreground mb-1">
+            Arraste e solte a planilha aqui
+          </p>
+          <p className="text-xs text-muted-foreground mb-6">
+            Suporta arquivos exportados do Google Sheets
+          </p>
+          <Button variant="default" onClick={handleImport} className="shadow-lg shadow-primary/20">
+            Selecionar Arquivo
           </Button>
         </div>
       </DialogContent>

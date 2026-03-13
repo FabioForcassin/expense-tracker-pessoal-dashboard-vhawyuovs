@@ -7,86 +7,85 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
 import { useDashboard } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { Home, Utensils, Car, Gamepad2, HeartPulse, MoreHorizontal } from 'lucide-react'
-
-const CATEGORY_ICONS: Record<string, React.ElementType> = {
-  Moradia: Home,
-  Alimentação: Utensils,
-  Transporte: Car,
-  Lazer: Gamepad2,
-  Saúde: HeartPulse,
-}
 
 export function TransactionsTable({ full = false }: { full?: boolean }) {
-  const { expenses, selectedCategories, categories } = useDashboard()
+  const { expenses, currentMonth, selectedPrimaryCat, selectedSecondaryCats, categories } =
+    useDashboard()
 
-  const activeCategories =
-    selectedCategories.length > 0
-      ? categories.filter((c) => selectedCategories.includes(c.id)).map((c) => c.name)
-      : categories.map((c) => c.name)
+  let filteredExpenses = expenses.filter((e) => e.date.startsWith(currentMonth))
 
-  const filteredExpenses = expenses
-    .filter((e) => activeCategories.includes(e.category))
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  if (selectedPrimaryCat) {
+    const cat = categories.find((c) => c.id === selectedPrimaryCat)
+    filteredExpenses = filteredExpenses.filter((e) => e.primaryCategory === cat?.name)
+    if (selectedSecondaryCats.length > 0) {
+      filteredExpenses = filteredExpenses.filter((e) =>
+        selectedSecondaryCats.includes(e.secondaryCategory),
+      )
+    }
+  }
 
-  const displayData = full ? filteredExpenses : filteredExpenses.slice(0, 10)
+  const displayData = filteredExpenses.sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  )
+  const finalData = full ? displayData : displayData.slice(0, 8)
 
   return (
-    <Card className="shadow-subtle mb-6 border-border/40">
+    <Card className="glass mb-6">
       <CardHeader>
         <CardTitle className="text-base font-semibold">Transações Recentes</CardTitle>
       </CardHeader>
-      <CardContent className="p-0 sm:p-6 sm:pt-0">
-        <Table>
+      <CardContent className="p-0 sm:p-6 sm:pt-0 overflow-x-auto">
+        <Table className="min-w-[800px]">
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border/40">
-              <TableHead className="w-[100px] sm:w-auto">Data</TableHead>
-              <TableHead>Descrição</TableHead>
-              <TableHead className="hidden sm:table-cell">Categoria</TableHead>
+              <TableHead className="w-[100px] whitespace-nowrap">Data</TableHead>
+              <TableHead className="min-w-[150px]">Estabelecimento</TableHead>
+              <TableHead>Despesa</TableHead>
+              <TableHead>Classificação</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Forma Pgto</TableHead>
               <TableHead className="text-right">Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {displayData.length === 0 ? (
+            {finalData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                  Nenhuma transação encontrada.
+                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                  Nenhuma transação encontrada para os filtros selecionados.
                 </TableCell>
               </TableRow>
             ) : (
-              displayData.map((expense) => {
-                const Icon = CATEGORY_ICONS[expense.category] || MoreHorizontal
-                const catColor =
-                  categories.find((c) => c.name === expense.category)?.color || 'currentColor'
-
+              finalData.map((expense) => {
                 return (
                   <TableRow
                     key={expense.id}
-                    className="hover:bg-muted/30 transition-colors border-border/30"
+                    className="hover:bg-muted/40 transition-colors border-border/30"
                   >
-                    <TableCell className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap font-medium">
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap font-medium">
                       {formatDate(expense.date)}
                     </TableCell>
-                    <TableCell className="font-medium text-foreground text-xs sm:text-sm">
-                      {expense.description || '-'}
-                      <div className="sm:hidden text-xs text-muted-foreground mt-0.5">
-                        {expense.category}
-                      </div>
+                    <TableCell className="font-medium text-foreground text-sm">
+                      {expense.establishment}
                     </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <div className="flex items-center gap-2.5">
-                        <div
-                          className="p-1.5 rounded-md"
-                          style={{ backgroundColor: `${catColor}20`, color: catColor }}
-                        >
-                          <Icon className="w-3.5 h-3.5" />
-                        </div>
-                        <span className="text-sm font-medium">{expense.category}</span>
-                      </div>
+                    <TableCell className="text-sm">{expense.primaryCategory}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {expense.secondaryCategory}
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-foreground text-sm">
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className="text-[10px] font-normal px-2 py-0.5 border-border/60"
+                      >
+                        {expense.type}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                      {expense.paymentMethod}
+                    </TableCell>
+                    <TableCell className="text-right font-semibold text-foreground text-sm whitespace-nowrap">
                       {formatCurrency(expense.value)}
                     </TableCell>
                   </TableRow>

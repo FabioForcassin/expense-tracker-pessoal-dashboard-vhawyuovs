@@ -8,13 +8,6 @@ import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
 export default function Index() {
   return (
     <div className="max-w-7xl mx-auto flex flex-col gap-2">
-      <div className="mb-4">
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Dashboard</h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Acompanhe seus gastos e orçamento do mês.
-        </p>
-      </div>
-
       <FilterSection />
       <KPICards />
 

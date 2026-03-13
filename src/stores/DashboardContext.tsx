@@ -1,70 +1,209 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react'
-import { Expense, Budget, AppCategory } from '@/types'
+import React, { createContext, useContext, useState, ReactNode, useMemo } from 'react'
+import { Expense, AppCategory } from '@/types'
 
 const INITIAL_CATEGORIES: AppCategory[] = [
-  { id: '1', name: 'Moradia', color: 'hsl(var(--chart-1))', icon: 'Home' },
-  { id: '2', name: 'Alimentação', color: 'hsl(var(--chart-2))', icon: 'Utensils' },
-  { id: '3', name: 'Transporte', color: 'hsl(var(--chart-3))', icon: 'Car' },
-  { id: '4', name: 'Lazer', color: 'hsl(var(--chart-4))', icon: 'Gamepad2' },
-  { id: '5', name: 'Saúde', color: 'hsl(var(--chart-5))', icon: 'HeartPulse' },
+  {
+    id: '1',
+    name: 'Moradia',
+    color: 'hsl(var(--chart-1))',
+    icon: 'Home',
+    subcategories: [
+      'Aluguel',
+      'Conta de Luz',
+      'Água',
+      'Internet',
+      'Condomínio',
+      'Gás',
+      'Lavanderia',
+    ],
+  },
+  {
+    id: '2',
+    name: 'Alimentação',
+    color: 'hsl(var(--chart-2))',
+    icon: 'Utensils',
+    subcategories: ['Supermercado', 'Restaurante', 'Padaria', 'Snacks', 'Café'],
+  },
+  {
+    id: '3',
+    name: 'Transporte',
+    color: 'hsl(var(--chart-3))',
+    icon: 'Car',
+    subcategories: ['Combustível', 'Uber/99', 'Estacionamento', 'Manutenção', 'Transporte Público'],
+  },
+  {
+    id: '4',
+    name: 'Pessoal',
+    color: 'hsl(var(--chart-4))',
+    icon: 'User',
+    subcategories: ['Roupas e Acessórios', 'Presentes', 'Futebol', 'Academia', 'Outros'],
+  },
+  {
+    id: '5',
+    name: 'Saúde',
+    color: 'hsl(var(--chart-5))',
+    icon: 'HeartPulse',
+    subcategories: ['Medicamentos', 'Plano de Saúde', 'Tratamentos', 'Médico'],
+  },
 ]
-
-const INITIAL_BUDGET: Budget = {
-  Moradia: 2500,
-  Alimentação: 1200,
-  Transporte: 600,
-  Lazer: 400,
-  Saúde: 300,
-}
 
 const INITIAL_EXPENSES: Expense[] = [
   {
     id: '1',
     date: '2024-03-02',
-    description: 'Supermercado',
-    category: 'Alimentação',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'Carrefour',
+    primaryCategory: 'Alimentação',
+    secondaryCategory: 'Supermercado',
+    type: 'Variável',
+    paymentMethod: 'CC Itaú',
     value: 450.5,
+    comment: 'Compra do mês',
+    classification: 'Pessoal',
+    who: 'Fabio',
   },
-  { id: '2', date: '2024-03-05', description: 'Uber', category: 'Transporte', value: 35.0 },
-  { id: '3', date: '2024-03-10', description: 'Aluguel', category: 'Moradia', value: 2000.0 },
-  { id: '4', date: '2024-03-12', description: 'Cinema', category: 'Lazer', value: 120.0 },
-  { id: '5', date: '2024-03-15', description: 'Farmácia', category: 'Saúde', value: 85.9 },
-  { id: '6', date: '2024-03-18', description: 'Conta de Luz', category: 'Moradia', value: 150.0 },
+  {
+    id: '2',
+    date: '2024-03-05',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'Uber',
+    primaryCategory: 'Transporte',
+    secondaryCategory: 'Uber/99',
+    type: 'Variável',
+    paymentMethod: 'CC Nubank',
+    value: 35.0,
+    comment: 'Volta do trabalho',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
+  {
+    id: '3',
+    date: '2024-03-10',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'QuintoAndar',
+    primaryCategory: 'Moradia',
+    secondaryCategory: 'Aluguel',
+    type: 'Fixa',
+    paymentMethod: 'Pix',
+    value: 2500.0,
+    comment: 'Aluguel apto',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
+  {
+    id: '4',
+    date: '2024-03-12',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'Bacio di Latte',
+    primaryCategory: 'Alimentação',
+    secondaryCategory: 'Snacks',
+    type: 'Variável',
+    paymentMethod: 'CC Nubank',
+    value: 45.0,
+    comment: 'Sorvete',
+    classification: 'Pessoal',
+    who: 'Ana',
+  },
+  {
+    id: '5',
+    date: '2024-03-15',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'Drogasil',
+    primaryCategory: 'Saúde',
+    secondaryCategory: 'Medicamentos',
+    type: 'Variável',
+    paymentMethod: 'CC Itaú',
+    value: 85.9,
+    comment: 'Remédios',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
+  {
+    id: '6',
+    date: '2024-03-18',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'Enel',
+    primaryCategory: 'Moradia',
+    secondaryCategory: 'Conta de Luz',
+    type: 'Variável',
+    paymentMethod: 'Débito',
+    value: 150.0,
+    comment: 'Luz fev',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
   {
     id: '7',
     date: '2024-03-20',
-    description: 'Restaurante',
-    category: 'Alimentação',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'Pecorino',
+    primaryCategory: 'Alimentação',
+    secondaryCategory: 'Restaurante',
+    type: 'Variável',
+    paymentMethod: 'CC Itaú',
     value: 180.0,
+    comment: 'Jantar',
+    classification: 'Pessoal',
+    who: 'Fabio',
   },
-  { id: '8', date: '2024-03-25', description: 'Gasolina', category: 'Transporte', value: 200.0 },
+  {
+    id: '8',
+    date: '2024-03-25',
+    monthNum: 3,
+    competency: 'Mar',
+    establishment: 'Posto Ipiranga',
+    primaryCategory: 'Transporte',
+    secondaryCategory: 'Combustível',
+    type: 'Variável',
+    paymentMethod: 'CC Nubank',
+    value: 200.0,
+    comment: 'Gasolina',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
 ]
 
 interface DashboardContextType {
   categories: AppCategory[]
-  budget: Budget
   expenses: Expense[]
   currentMonth: string
   setCurrentMonth: (m: string) => void
-  selectedCategories: string[]
-  toggleCategory: (id: string) => void
+  selectedPrimaryCat: string | null
+  setSelectedPrimaryCat: (id: string | null) => void
+  selectedSecondaryCats: string[]
+  toggleSecondaryCat: (name: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => void
-  importBudget: (b: Budget) => void
+  monthlyIncome: number
+  setMonthlyIncome: (v: number) => void
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [categories] = useState<AppCategory[]>(INITIAL_CATEGORIES)
-  const [budget, setBudget] = useState<Budget>(INITIAL_BUDGET)
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES)
   const [currentMonth, setCurrentMonth] = useState('2024-03')
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
+  const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
+  const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
+  const [monthlyIncome, setMonthlyIncome] = useState(10000)
 
-  const toggleCategory = (id: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id],
+  const toggleSecondaryCat = (name: string) => {
+    setSelectedSecondaryCats((prev) =>
+      prev.includes(name) ? prev.filter((c) => c !== name) : [...prev, name],
     )
+  }
+
+  // When primary category changes, clear secondary selections
+  const handleSetPrimaryCat = (id: string | null) => {
+    setSelectedPrimaryCat(id)
+    setSelectedSecondaryCats([])
   }
 
   const addExpense = (e: Omit<Expense, 'id'>) => {
@@ -72,22 +211,20 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setExpenses((prev) => [...prev, newExpense])
   }
 
-  const importBudget = (newBudget: Budget) => {
-    setBudget(newBudget)
-  }
-
   return (
     <DashboardContext.Provider
       value={{
         categories,
-        budget,
         expenses,
         currentMonth,
         setCurrentMonth,
-        selectedCategories,
-        toggleCategory,
+        selectedPrimaryCat,
+        setSelectedPrimaryCat: handleSetPrimaryCat,
+        selectedSecondaryCats,
+        toggleSecondaryCat,
         addExpense,
-        importBudget,
+        monthlyIncome,
+        setMonthlyIncome,
       }}
     >
       {children}
