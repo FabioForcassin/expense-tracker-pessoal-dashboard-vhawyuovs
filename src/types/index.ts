@@ -6,7 +6,7 @@ export interface Expense {
   establishment: string // e.g., 'bacio di latte'
   primaryCategory: string // Despesa e.g., 'Alimentação'
   secondaryCategory: string // Classificação e.g., 'Snacks'
-  type: 'Fixa' | 'Variável'
+  type: 'Fixa' | 'Variável' | 'Receita'
   paymentMethod: string // Forma pgto e.g., 'CC nubank master'
   value: number // R$ Valor
   comment: string // Comentário
@@ -31,3 +31,21 @@ export interface MonthlyData {
   income: number
   budget: Budget
 }
+
+export const PAYMENT_METHODS = [
+  'Itaú',
+  'Santander',
+  'BTG',
+  'Nubank',
+  'Mercado Pago',
+  'Inter - Benera',
+  'CC Itaú visa infinity',
+  'CC Itaú master black',
+  'CC Nubank master',
+  'CC Itaú empresas',
+  'CC Mercado Pago visa',
+  'CC Itaú Pão de Açúcar',
+  'CC Itaú LATAM',
+  'CC itau empresas - Benera',
+  'CC inter master - Benera',
+]

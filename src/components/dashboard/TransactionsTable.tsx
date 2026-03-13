@@ -10,24 +10,25 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { useDashboard } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 
 export function TransactionsTable({ full = false }: { full?: boolean }) {
   const { expenses, currentMonth, selectedPrimaryCat, selectedSecondaryCats, categories } =
     useDashboard()
 
-  let filteredExpenses = expenses.filter((e) => e.date.startsWith(currentMonth))
+  let filteredTransactions = expenses.filter((e) => e.date.startsWith(currentMonth))
 
   if (selectedPrimaryCat) {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
-    filteredExpenses = filteredExpenses.filter((e) => e.primaryCategory === cat?.name)
+    filteredTransactions = filteredTransactions.filter((e) => e.primaryCategory === cat?.name)
     if (selectedSecondaryCats.length > 0) {
-      filteredExpenses = filteredExpenses.filter((e) =>
+      filteredTransactions = filteredTransactions.filter((e) =>
         selectedSecondaryCats.includes(e.secondaryCategory),
       )
     }
   }
 
-  const displayData = filteredExpenses.sort(
+  const displayData = filteredTransactions.sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   )
   const finalData = full ? displayData : displayData.slice(0, 8)
@@ -42,11 +43,11 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
           <TableHeader>
             <TableRow className="hover:bg-transparent border-border/40">
               <TableHead className="w-[100px] whitespace-nowrap">Data</TableHead>
-              <TableHead className="min-w-[150px]">Estabelecimento</TableHead>
-              <TableHead>Despesa</TableHead>
-              <TableHead>Classificação</TableHead>
+              <TableHead className="min-w-[150px]">Descrição/Origem</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead>Subcategoria</TableHead>
               <TableHead>Tipo</TableHead>
-              <TableHead>Forma Pgto</TableHead>
+              <TableHead>Pgto/Conta</TableHead>
               <TableHead className="text-right">Valor</TableHead>
             </TableRow>
           </TableHeader>
@@ -54,39 +55,52 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
             {finalData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
-                  Nenhuma transação encontrada para os filtros selecionados.
+                  Nenhuma transação encontrada.
                 </TableCell>
               </TableRow>
             ) : (
-              finalData.map((expense) => {
+              finalData.map((tx) => {
+                const isIncome = tx.primaryCategory === 'Receitas'
                 return (
                   <TableRow
-                    key={expense.id}
+                    key={tx.id}
                     className="hover:bg-muted/40 transition-colors border-border/30"
                   >
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap font-medium">
-                      {formatDate(expense.date)}
+                      {formatDate(tx.date)}
                     </TableCell>
-                    <TableCell className="font-medium text-foreground text-sm">
-                      {expense.establishment}
+                    <TableCell className="font-medium text-foreground text-sm flex items-center gap-2">
+                      {isIncome ? (
+                        <div className="w-6 h-6 rounded-full bg-success/10 flex items-center justify-center text-success shrink-0">
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        </div>
+                      ) : (
+                        <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                          <ArrowDownRight className="w-3.5 h-3.5" />
+                        </div>
+                      )}
+                      {tx.establishment}
                     </TableCell>
-                    <TableCell className="text-sm">{expense.primaryCategory}</TableCell>
+                    <TableCell className="text-sm">{tx.primaryCategory}</TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {expense.secondaryCategory}
+                      {tx.secondaryCategory}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
                         className="text-[10px] font-normal px-2 py-0.5 border-border/60"
                       >
-                        {expense.type}
+                        {tx.type}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
-                      {expense.paymentMethod}
+                      {tx.paymentMethod}
                     </TableCell>
-                    <TableCell className="text-right font-semibold text-foreground text-sm whitespace-nowrap">
-                      {formatCurrency(expense.value)}
+                    <TableCell
+                      className={`text-right font-semibold text-sm whitespace-nowrap ${isIncome ? 'text-success' : 'text-foreground'}`}
+                    >
+                      {isIncome ? '+' : '-'}
+                      {formatCurrency(tx.value)}
                     </TableCell>
                   </TableRow>
                 )

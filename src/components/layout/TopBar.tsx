@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Menu, Plus, Upload } from 'lucide-react'
+import { Menu, Plus, Upload, TrendingUp } from 'lucide-react'
 import { useSidebar } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { AddExpenseModal } from '../modals/AddExpenseModal'
@@ -10,15 +10,20 @@ export function TopBar() {
   const { toggleSidebar, isMobile } = useSidebar()
   const { currentMonth } = useDashboard()
   const [expenseModalOpen, setExpenseModalOpen] = useState(false)
+  const [modalDefaultTab, setModalDefaultTab] = useState<'expense' | 'income'>('expense')
   const [importModalOpen, setImportModalOpen] = useState(false)
 
   const displayMonth = new Date(currentMonth + '-02').toLocaleString('pt-BR', {
-    // Use -02 to avoid timezone shifting to previous month
     month: 'long',
     year: 'numeric',
   })
 
   const formattedMonth = displayMonth.charAt(0).toUpperCase() + displayMonth.slice(1)
+
+  const openAddModal = (tab: 'expense' | 'income') => {
+    setModalDefaultTab(tab)
+    setExpenseModalOpen(true)
+  }
 
   return (
     <header className="sticky top-0 z-30 flex h-[72px] w-full items-center justify-between border-b border-border/40 bg-background/70 backdrop-blur-xl px-4 sm:px-6 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
@@ -46,13 +51,27 @@ export function TopBar() {
           <Upload className="w-4 h-4 mr-2 text-muted-foreground" />
           Importar Dados
         </Button>
-        <Button onClick={() => setExpenseModalOpen(true)} className="shadow-lg shadow-primary/20">
-          <Plus className="w-4 h-4 mr-1.5" />
-          Nova Despesa
-        </Button>
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Button
+            variant="outline"
+            onClick={() => openAddModal('income')}
+            className="border-success/30 text-success hover:bg-success/10 hover:text-success shadow-sm"
+          >
+            <TrendingUp className="w-4 h-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Nova Receita</span>
+          </Button>
+          <Button onClick={() => openAddModal('expense')} className="shadow-lg shadow-primary/20">
+            <Plus className="w-4 h-4 sm:mr-1.5" />
+            <span className="hidden sm:inline">Nova Despesa</span>
+          </Button>
+        </div>
       </div>
 
-      <AddExpenseModal open={expenseModalOpen} onOpenChange={setExpenseModalOpen} />
+      <AddExpenseModal
+        open={expenseModalOpen}
+        onOpenChange={setExpenseModalOpen}
+        defaultTab={modalDefaultTab}
+      />
       <ImportDataModal open={importModalOpen} onOpenChange={setImportModalOpen} />
     </header>
   )

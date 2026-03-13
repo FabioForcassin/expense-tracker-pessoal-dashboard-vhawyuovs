@@ -12,34 +12,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/format'
 
 export function CumulativeSpendingChart() {
-  const {
-    expenses,
-    monthlyIncome,
-    currentMonth,
-    selectedPrimaryCat,
-    selectedSecondaryCats,
-    categories,
-  } = useDashboard()
+  const { expenses, currentMonth, selectedPrimaryCat, selectedSecondaryCats, categories } =
+    useDashboard()
 
-  let filteredExpenses = expenses.filter((e) => e.date.startsWith(currentMonth))
+  const allMonthExpenses = expenses.filter((e) => e.date.startsWith(currentMonth))
+  const totalReceitas =
+    allMonthExpenses
+      .filter((e) => e.primaryCategory === 'Receitas')
+      .reduce((sum, e) => sum + e.value, 0) || 10000
 
-  // Calculate budget proportion for the filter
-  let activeBudget = monthlyIncome
-  if (selectedPrimaryCat) {
+  let filteredExpenses = allMonthExpenses.filter((e) => e.primaryCategory !== 'Receitas')
+
+  let activeBudget = totalReceitas
+
+  if (selectedPrimaryCat && selectedPrimaryCat !== 'cat_receitas') {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
     filteredExpenses = filteredExpenses.filter((e) => e.primaryCategory === cat?.name)
-    // Rough estimate of budget for category if filtered
-    activeBudget = monthlyIncome * 0.3
+    // Estimate budget for specific category if selected
+    activeBudget = totalReceitas * 0.2
 
     if (selectedSecondaryCats.length > 0) {
       filteredExpenses = filteredExpenses.filter((e) =>
         selectedSecondaryCats.includes(e.secondaryCategory),
       )
-      activeBudget = monthlyIncome * 0.1
+      activeBudget = totalReceitas * 0.05
     }
   }
 
-  // Get days in current month
   const [year, month] = currentMonth.split('-').map(Number)
   const daysInMonth = new Date(year, month, 0).getDate()
 
@@ -55,13 +54,13 @@ export function CumulativeSpendingChart() {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-background/90 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl text-sm">
+        <div className="bg-background/90 backdrop-blur-md border border-border/50 p-3 rounded-lg shadow-xl text-sm z-50">
           <p className="font-semibold mb-2">Dia {label}</p>
           {payload.map((entry: any) => (
             <div key={entry.name} className="flex items-center justify-between gap-4 mb-1">
               <span className="flex items-center gap-1.5 text-muted-foreground">
                 <div className="w-2 h-0.5 rounded-full" style={{ backgroundColor: entry.color }} />
-                {entry.name === 'cumulative' ? 'Acumulado' : 'Ritmo Ideal'}
+                {entry.name === 'cumulative' ? 'Acumulado (Real)' : 'Ritmo Seguro (Base Receita)'}
               </span>
               <span className="font-medium text-foreground">{formatCurrency(entry.value)}</span>
             </div>
@@ -75,7 +74,7 @@ export function CumulativeSpendingChart() {
   return (
     <Card className="glass mb-6">
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Evolução Diária de Gastos</CardTitle>
+        <CardTitle className="text-base font-semibold">Evolução Diária do Gasto</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-[260px] w-full mt-4">
@@ -124,7 +123,7 @@ export function CumulativeSpendingChart() {
                 type="dashed"
                 dataKey="ideal"
                 name="ideal"
-                stroke="hsl(var(--muted-foreground)/0.5)"
+                stroke="hsl(var(--success)/0.5)"
                 strokeWidth={2}
                 strokeDasharray="6 6"
                 dot={false}

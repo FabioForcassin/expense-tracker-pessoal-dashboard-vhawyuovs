@@ -23,7 +23,6 @@ export function FilterSection() {
 
   const activeCategory = categories.find((c) => c.id === selectedPrimaryCat)
 
-  // Generate last 12 months for the dropdown starting from Dec 2024 back to Jan 2024
   const months = [
     { val: '2024-12', label: 'Dezembro 2024' },
     { val: '2024-11', label: 'Novembro 2024' },
@@ -44,7 +43,7 @@ export function FilterSection() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-4">
         <div className="w-full sm:w-48 shrink-0">
           <Select value={currentMonth} onValueChange={setCurrentMonth}>
-            <SelectTrigger className="glass border-white/40 shadow-sm">
+            <SelectTrigger className="glass border-white/40 shadow-sm font-medium">
               <SelectValue placeholder="Mês" />
             </SelectTrigger>
             <SelectContent>
@@ -60,7 +59,7 @@ export function FilterSection() {
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Filter className="w-4 h-4 text-muted-foreground shrink-0" />
           <ScrollArea className="w-full max-w-full whitespace-nowrap">
-            <div className="flex w-max space-x-2 p-1">
+            <div className="flex w-max space-x-2 p-1 pb-2">
               <Badge
                 variant={!selectedPrimaryCat ? 'default' : 'outline'}
                 className={`cursor-pointer px-4 py-1.5 text-sm font-medium transition-all shadow-sm
@@ -76,7 +75,7 @@ export function FilterSection() {
                     key={cat.id}
                     variant={isSelected ? 'default' : 'outline'}
                     className={`cursor-pointer px-4 py-1.5 text-sm font-medium transition-all shadow-sm
-                      ${isSelected ? '' : 'hover:bg-accent/50 bg-background/50 backdrop-blur-md text-muted-foreground hover:text-foreground'}`}
+                      ${isSelected ? (cat.name === 'Receitas' ? 'bg-success text-white hover:bg-success/90' : '') : 'hover:bg-accent/50 bg-background/50 backdrop-blur-md text-muted-foreground hover:text-foreground'}`}
                     onClick={() => setSelectedPrimaryCat(cat.id)}
                   >
                     {cat.name}
@@ -89,7 +88,6 @@ export function FilterSection() {
         </div>
       </div>
 
-      {/* Secondary Categories Drilldown */}
       {activeCategory && activeCategory.subcategories.length > 0 && (
         <div className="flex items-center gap-2 pl-1 animate-fade-in-up">
           <Layers className="w-4 h-4 text-primary shrink-0" />
@@ -97,12 +95,13 @@ export function FilterSection() {
             <div className="flex w-max space-x-2 p-1">
               {activeCategory.subcategories.map((sub) => {
                 const isSelected = selectedSecondaryCats.includes(sub)
+                const isIncome = activeCategory.name === 'Receitas'
                 return (
                   <Badge
                     key={sub}
                     variant={isSelected ? 'secondary' : 'outline'}
                     className={`cursor-pointer px-3 py-1 text-xs transition-all
-                      ${isSelected ? 'bg-primary/20 text-primary border-primary/30' : 'bg-background/40 hover:bg-background/60 text-muted-foreground'}`}
+                      ${isSelected ? (isIncome ? 'bg-success/20 text-success border-success/30' : 'bg-primary/20 text-primary border-primary/30') : 'bg-background/40 hover:bg-background/60 text-muted-foreground'}`}
                     onClick={() => toggleSecondaryCat(sub)}
                   >
                     {sub}
