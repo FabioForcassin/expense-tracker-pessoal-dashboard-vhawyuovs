@@ -14,34 +14,37 @@ import { ArrowDownRight, ArrowUpRight, CalendarClock } from 'lucide-react'
 
 export function FutureExpensesTable({ full = false }: { full?: boolean }) {
   const { selectedYear } = useDashboard()
-  // Bypass month filter to get all timeline data, but respects Category and Account filters
   const allExpenses = useFilteredExpenses(false)
 
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
+  const d = new Date()
+  const todayStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
 
-  // 1. Filter only future transactions
-  let futureExpenses = allExpenses.filter((e) => new Date(e.date) > now)
+  let futureExpenses = allExpenses.filter((e) => e.date >= todayStr)
 
-  // 2. Project from selected year and into the future
   if (selectedYear) {
     futureExpenses = futureExpenses.filter((e) => e.date >= `${selectedYear}-01-01`)
   }
 
-  // Sort ascending by date (closest future first)
   const displayData = [...futureExpenses].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   )
 
   const finalData = full ? displayData : displayData.slice(0, 8)
 
+  const subtotal = futureExpenses.reduce((acc, tx) => {
+    return acc + (tx.primaryCategory === 'Receitas' ? 0 : tx.value)
+  }, 0)
+
   return (
-    <Card className="glass border-l-4 border-l-chart-4">
-      <CardHeader>
+    <Card className="glass border-l-4 border-l-chart-4 mb-6">
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <CalendarClock className="w-4 h-4 text-chart-4" />
           Previsibilidade de Parcelamento
         </CardTitle>
+        <div className="px-3 py-1.5 bg-chart-4/10 text-chart-4 font-semibold text-sm rounded-md border border-chart-4/20">
+          Subtotal Futuro: {formatCurrency(subtotal)}
+        </div>
       </CardHeader>
       <CardContent className="p-0 sm:p-6 sm:pt-0 overflow-x-auto">
         <Table className="min-w-[800px]">
@@ -61,7 +64,7 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
             {finalData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                  Nenhuma transação futura encontrada no período.
+                  Nenhuma transação futura encontrada.
                 </TableCell>
               </TableRow>
             ) : (

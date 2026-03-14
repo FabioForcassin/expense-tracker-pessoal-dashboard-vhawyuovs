@@ -1,5 +1,7 @@
-import { createContext, useContext, useState, ReactNode, useMemo } from 'react'
+import { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react'
 import { Expense, AppCategory, BudgetStore, getAccountType } from '@/types'
+import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 
 export const INITIAL_CATEGORIES: AppCategory[] = [
   {
@@ -219,197 +221,9 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
   },
 ]
 
-const INITIAL_EXPENSES: Expense[] = [
-  // 2024 Data
-  {
-    id: '100',
-    date: '2024-03-01',
-    monthNum: 3,
-    competency: 'Mar',
-    establishment: 'Empresa S.A',
-    primaryCategory: 'Receitas',
-    secondaryCategory: 'Salário',
-    type: 'Receita',
-    paymentMethod: 'Itaú',
-    value: 12500.0,
-    comment: 'Salário Mensal',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '1',
-    date: '2024-03-02',
-    monthNum: 3,
-    competency: 'Mar',
-    establishment: 'Carrefour',
-    primaryCategory: 'Alimentação',
-    secondaryCategory: 'Supermercado/Feira',
-    type: 'Variável',
-    paymentMethod: 'CC Itaú visa infinity',
-    value: 850.5,
-    comment: 'Compra do mês',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '3',
-    date: '2024-03-10',
-    monthNum: 3,
-    competency: 'Mar',
-    establishment: 'QuintoAndar',
-    primaryCategory: 'Moradia',
-    secondaryCategory: 'Condomínio',
-    type: 'Fixa',
-    paymentMethod: 'Itaú',
-    value: 950.0,
-    comment: 'Condomínio apto',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  // 2025 Data Sample
-  {
-    id: '200',
-    date: '2025-01-05',
-    monthNum: 1,
-    competency: 'Jan',
-    establishment: 'Empresa S.A',
-    primaryCategory: 'Receitas',
-    secondaryCategory: 'Salário',
-    type: 'Receita',
-    paymentMethod: 'Itaú',
-    value: 13500.0,
-    comment: 'Salário Atualizado',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '201',
-    date: '2025-01-12',
-    monthNum: 1,
-    competency: 'Jan',
-    establishment: 'Pão de Açúcar',
-    primaryCategory: 'Alimentação',
-    secondaryCategory: 'Supermercado/Feira',
-    type: 'Variável',
-    paymentMethod: 'CC Itaú visa infinity',
-    value: 920.0,
-    comment: '',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '202',
-    date: '2025-02-15',
-    monthNum: 2,
-    competency: 'Fev',
-    establishment: 'Drogasil',
-    primaryCategory: 'Saúde',
-    secondaryCategory: 'Medicamentos/Farmácia',
-    type: 'Variável',
-    paymentMethod: 'CC Nubank master',
-    value: 180.0,
-    comment: '',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  // 2026 Data Sample
-  {
-    id: '300',
-    date: '2026-03-10',
-    monthNum: 3,
-    competency: 'Mar',
-    establishment: 'Oficina Autorizada',
-    primaryCategory: 'Transporte',
-    secondaryCategory: 'Manutenção',
-    type: 'Variável',
-    paymentMethod: 'CC Nubank master',
-    value: 1200.0,
-    comment: 'Revisão Anual',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  // Future Predictability Mock Data
-  {
-    id: '400',
-    date: '2025-10-10',
-    monthNum: 10,
-    competency: 'Out',
-    establishment: 'Parcela Carro',
-    primaryCategory: 'Transporte',
-    secondaryCategory: 'Financiamento do Carro',
-    type: 'Fixa',
-    paymentMethod: 'Itaú',
-    value: 1500.0,
-    comment: 'Parcela 24/36',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '401',
-    date: '2025-11-10',
-    monthNum: 11,
-    competency: 'Nov',
-    establishment: 'Parcela Carro',
-    primaryCategory: 'Transporte',
-    secondaryCategory: 'Financiamento do Carro',
-    type: 'Fixa',
-    paymentMethod: 'Itaú',
-    value: 1500.0,
-    comment: 'Parcela 25/36',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '402',
-    date: '2025-10-15',
-    monthNum: 10,
-    competency: 'Out',
-    establishment: 'Seguro Residencial Anual',
-    primaryCategory: 'Moradia',
-    secondaryCategory: 'Seguro Residencial',
-    type: 'Fixa',
-    paymentMethod: 'CC Itaú visa infinity',
-    value: 1200.0,
-    comment: 'Parcela 1/4',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '403',
-    date: '2026-01-10',
-    monthNum: 1,
-    competency: 'Jan',
-    establishment: 'Parcela Carro',
-    primaryCategory: 'Transporte',
-    secondaryCategory: 'Financiamento do Carro',
-    type: 'Fixa',
-    paymentMethod: 'Itaú',
-    value: 1500.0,
-    comment: 'Parcela 27/36',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '404',
-    date: '2026-01-15',
-    monthNum: 1,
-    competency: 'Jan',
-    establishment: 'IPVA',
-    primaryCategory: 'Transporte',
-    secondaryCategory: 'IPVA',
-    type: 'Fixa',
-    paymentMethod: 'CC Nubank master',
-    value: 2300.0,
-    comment: 'Cota Única',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-]
-
 const generateInitialBudget = (): BudgetStore => {
   const budget: BudgetStore = {}
   const years = [2024, 2025, 2026, 2027, 2028]
-
   INITIAL_CATEGORIES.forEach((cat) => {
     cat.subcategories.forEach((sub) => {
       const defaultVal = cat.name === 'Receitas' ? 2500 : 250
@@ -433,7 +247,7 @@ interface DashboardContextType {
   setSelectedYear: (y: string) => void
   selectedMonthValues: string[]
   setSelectedMonthValues: (m: string[]) => void
-  selectedMonths: string[] // Derived
+  selectedMonths: string[]
   selectedPrimaryCat: string | null
   setSelectedPrimaryCat: (id: string | null) => void
   selectedSecondaryCats: string[]
@@ -442,20 +256,59 @@ interface DashboardContextType {
   toggleAccountType: (type: string) => void
   selectedAccounts: string[]
   toggleAccount: (account: string) => void
-  addExpense: (e: Omit<Expense, 'id'>) => void
+  addExpense: (e: Omit<Expense, 'id'>) => Promise<void>
   updateBudget: (key: string, value: number) => void
-  bulkImportData: (type: 'realizado' | 'orcamento', year: string, data?: Expense[]) => void
+  bulkImportData: (type: 'realizado' | 'orcamento', year: string, data?: Expense[]) => Promise<void>
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth()
   const [categories] = useState<AppCategory[]>(INITIAL_CATEGORIES)
-  const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES)
+  const [expenses, setExpenses] = useState<Expense[]>([])
   const [budget, setBudget] = useState<BudgetStore>(generateInitialBudget())
 
-  const [selectedYear, setSelectedYear] = useState<string>('2024')
-  const [selectedMonthValues, setSelectedMonthValues] = useState<string[]>(['03'])
+  const [selectedYear, setSelectedYear] = useState<string>('2026')
+  const [selectedMonthValues, setSelectedMonthValues] = useState<string[]>([
+    (new Date().getMonth() + 1).toString().padStart(2, '0'),
+  ])
+
+  useEffect(() => {
+    if (user) {
+      fetchExpenses()
+    } else {
+      setExpenses([])
+    }
+  }, [user])
+
+  const fetchExpenses = async () => {
+    if (!user) return
+    const { data, error } = await supabase
+      .from('expenses' as any)
+      .select('*')
+      .eq('user_id', user.id)
+    if (error) {
+      console.error('Error fetching expenses:', error)
+      return
+    }
+    const mapped = (data || []).map((d: any) => ({
+      id: d.id,
+      date: d.date.split('T')[0],
+      monthNum: d.month_num,
+      competency: d.competency,
+      establishment: d.description,
+      primaryCategory: d.category,
+      secondaryCategory: d.secondary_category,
+      type: d.type,
+      paymentMethod: d.payment_method,
+      value: Number(d.amount),
+      comment: d.comment,
+      classification: d.classification,
+      who: d.who,
+    }))
+    setExpenses(mapped)
+  }
 
   const selectedMonths = useMemo(() => {
     return selectedMonthValues.map((m) => `${selectedYear}-${m}`)
@@ -463,7 +316,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
   const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
-
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([])
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
 
@@ -490,13 +342,47 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     )
   }
 
-  const addExpense = (e: Omit<Expense, 'id'>) => {
-    const newId =
-      typeof crypto !== 'undefined' && crypto.randomUUID
-        ? crypto.randomUUID()
-        : `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
-
-    const newExpense = { ...e, id: newId }
+  const addExpense = async (e: Omit<Expense, 'id'>) => {
+    if (!user) return
+    const payload = {
+      user_id: user.id,
+      description: e.establishment,
+      amount: e.value,
+      category: e.primaryCategory,
+      date: new Date(e.date + 'T00:00:00Z').toISOString(),
+      secondary_category: e.secondaryCategory,
+      type: e.type,
+      payment_method: e.paymentMethod,
+      comment: e.comment,
+      classification: e.classification,
+      who: e.who,
+      month_num: e.monthNum,
+      competency: e.competency,
+    }
+    const { data, error } = await supabase
+      .from('expenses' as any)
+      .insert([payload])
+      .select()
+      .single()
+    if (error || !data) {
+      console.error('Error inserting expense:', error)
+      return
+    }
+    const newExpense: Expense = {
+      id: data.id,
+      date: data.date.split('T')[0],
+      monthNum: data.month_num,
+      competency: data.competency,
+      establishment: data.description,
+      primaryCategory: data.category,
+      secondaryCategory: data.secondary_category,
+      type: data.type,
+      paymentMethod: data.payment_method,
+      value: Number(data.amount),
+      comment: data.comment,
+      classification: data.classification,
+      who: data.who,
+    }
     setExpenses((prev) => [...prev, newExpense])
   }
 
@@ -504,67 +390,104 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setBudget((prev) => ({ ...prev, [key]: value }))
   }
 
-  const bulkImportData = (
+  const bulkImportData = async (
     type: 'realizado' | 'orcamento',
     year: string,
     parsedData?: Expense[],
   ) => {
     if (type === 'realizado') {
-      if (parsedData && parsedData.length > 0) {
-        setExpenses((prev) => [...prev, ...parsedData])
-        return
-      }
+      if (!user) return
+      let itemsToInsert = parsedData || []
 
-      // Fallback generator uses realistic names instead of sequential numbers
-      const newExpenses: Expense[] = []
-      const numExpenses = 120
-      const methods = ['Itaú', 'Nubank', 'CC Itaú visa infinity', 'Santander', 'Dinheiro']
-      const establishments = [
-        'Supermercado Extra',
-        'Posto Ipiranga',
-        'Farmácia Drogasil',
-        'Restaurante do João',
-        'Padaria Pão Quente',
-        'Cinema Kinoplex',
-        'Amazon',
-        'Mercado Livre',
-        'Uber',
-        'Ifood',
-      ]
+      if (!parsedData || parsedData.length === 0) {
+        const generated: Omit<Expense, 'id'>[] = []
+        const numExpenses = 120
+        const methods = ['Itaú', 'Nubank', 'CC Itaú visa infinity', 'Santander', 'Dinheiro']
+        const establishments = [
+          'Supermercado Extra',
+          'Posto Ipiranga',
+          'Farmácia Drogasil',
+          'Restaurante do João',
+          'Padaria Pão Quente',
+          'Cinema Kinoplex',
+          'Amazon',
+          'Mercado Livre',
+          'Uber',
+          'Ifood',
+        ]
 
-      for (let i = 0; i < numExpenses; i++) {
-        const m = Math.floor(Math.random() * 12) + 1
-        const d = Math.floor(Math.random() * 28) + 1
-        const date = `${year}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`
-        const isReceita = Math.random() > 0.85
+        for (let i = 0; i < numExpenses; i++) {
+          const m = Math.floor(Math.random() * 12) + 1
+          const d = Math.floor(Math.random() * 28) + 1
+          const date = `${year}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`
+          const isReceita = Math.random() > 0.85
 
-        let cat = categories.find((c) => c.name === 'Receitas')!
-        if (!isReceita) {
-          const expCats = categories.filter((c) => c.name !== 'Receitas')
-          cat = expCats[Math.floor(Math.random() * expCats.length)]
+          let cat = categories.find((c) => c.name === 'Receitas')!
+          if (!isReceita) {
+            const expCats = categories.filter((c) => c.name !== 'Receitas')
+            cat = expCats[Math.floor(Math.random() * expCats.length)]
+          }
+          const sub = cat.subcategories[Math.floor(Math.random() * cat.subcategories.length)]
+          const val = isReceita ? Math.random() * 8000 + 2000 : Math.random() * 600 + 20
+
+          generated.push({
+            date,
+            monthNum: m,
+            competency: m.toString().padStart(2, '0'),
+            establishment: isReceita
+              ? 'Cliente/Empresa'
+              : establishments[Math.floor(Math.random() * establishments.length)],
+            primaryCategory: cat.name,
+            secondaryCategory: sub,
+            type: isReceita ? 'Receita' : Math.random() > 0.5 ? 'Fixa' : 'Variável',
+            paymentMethod: methods[Math.floor(Math.random() * methods.length)],
+            value: parseFloat(val.toFixed(2)),
+            comment: '',
+            classification: Math.random() > 0.8 ? 'Empresa' : 'Pessoal',
+            who: 'Usuário',
+          })
         }
-        const sub = cat.subcategories[Math.floor(Math.random() * cat.subcategories.length)]
-        const val = isReceita ? Math.random() * 8000 + 2000 : Math.random() * 600 + 20
-
-        newExpenses.push({
-          id: `imp_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 8)}`,
-          date,
-          monthNum: m,
-          competency: m.toString().padStart(2, '0'),
-          establishment: isReceita
-            ? 'Cliente/Empresa'
-            : establishments[Math.floor(Math.random() * establishments.length)],
-          primaryCategory: cat.name,
-          secondaryCategory: sub,
-          type: isReceita ? 'Receita' : Math.random() > 0.5 ? 'Fixa' : 'Variável',
-          paymentMethod: methods[Math.floor(Math.random() * methods.length)],
-          value: parseFloat(val.toFixed(2)),
-          comment: '',
-          classification: Math.random() > 0.8 ? 'Empresa' : 'Pessoal',
-          who: 'Usuário',
-        })
+        itemsToInsert = generated as Expense[]
       }
-      setExpenses((prev) => [...prev, ...newExpenses])
+
+      const payloads = itemsToInsert.map((e) => ({
+        user_id: user.id,
+        description: e.establishment,
+        amount: e.value,
+        category: e.primaryCategory,
+        date: new Date(e.date + 'T00:00:00Z').toISOString(),
+        secondary_category: e.secondaryCategory,
+        type: e.type,
+        payment_method: e.paymentMethod,
+        comment: e.comment,
+        classification: e.classification,
+        who: e.who,
+        month_num: e.monthNum,
+        competency: e.competency,
+      }))
+
+      const { data, error } = await supabase
+        .from('expenses' as any)
+        .insert(payloads)
+        .select()
+      if (!error && data) {
+        const mapped = data.map((d: any) => ({
+          id: d.id,
+          date: d.date.split('T')[0],
+          monthNum: d.month_num,
+          competency: d.competency,
+          establishment: d.description,
+          primaryCategory: d.category,
+          secondaryCategory: d.secondary_category,
+          type: d.type,
+          paymentMethod: d.payment_method,
+          value: Number(d.amount),
+          comment: d.comment,
+          classification: d.classification,
+          who: d.who,
+        }))
+        setExpenses((prev) => [...prev, ...mapped])
+      }
     } else {
       const newBudget = { ...budget }
       Object.keys(newBudget).forEach((k) => {
@@ -643,7 +566,6 @@ export function useFilteredExpenses(applyMonthFilter = true) {
     } else {
       filtered = filtered.filter((e) => e.primaryCategory === 'Receitas')
     }
-
     if (selectedSecondaryCats.length > 0) {
       filtered = filtered.filter((e) => selectedSecondaryCats.includes(e.secondaryCategory))
     }

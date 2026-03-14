@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import {
   Table,
@@ -8,22 +9,82 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react'
 
 export function TransactionsTable({ full = false }: { full?: boolean }) {
   const filteredTransactions = useFilteredExpenses(true)
 
-  const displayData = [...filteredTransactions].sort(
-    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
+  const sortedTransactions = [...filteredTransactions].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
   )
-  const finalData = full ? displayData : displayData.slice(0, 8)
+
+  const [currentDateStr, setCurrentDateStr] = useState<string>(() => {
+    const d = new Date()
+    return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
+  })
+
+  const handlePrevDay = () => {
+    const [y, m, d] = currentDateStr.split('-').map(Number)
+    const dateObj = new Date(y, m - 1, d)
+    dateObj.setDate(dateObj.getDate() - 1)
+    setCurrentDateStr(
+      `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`,
+    )
+  }
+
+  const handleNextDay = () => {
+    const [y, m, d] = currentDateStr.split('-').map(Number)
+    const dateObj = new Date(y, m - 1, d)
+    dateObj.setDate(dateObj.getDate() + 1)
+    setCurrentDateStr(
+      `${dateObj.getFullYear()}-${(dateObj.getMonth() + 1).toString().padStart(2, '0')}-${dateObj.getDate().toString().padStart(2, '0')}`,
+    )
+  }
+
+  const dailyTransactions = sortedTransactions.filter((t) => t.date === currentDateStr)
+
+  const netSubtotal = dailyTransactions.reduce((acc, t) => {
+    return acc + (t.primaryCategory === 'Receitas' ? t.value : -t.value)
+  }, 0)
+
+  const finalData = full ? dailyTransactions : dailyTransactions.slice(0, 10)
 
   return (
     <Card className="glass mb-6">
-      <CardHeader>
+      <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <CardTitle className="text-base font-semibold">Transações Recentes</CardTitle>
+        <div className="flex flex-wrap items-center gap-4">
+          <div className="flex items-center bg-muted/50 rounded-lg p-1 border border-border/50">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-background"
+              onClick={handlePrevDay}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-semibold w-28 text-center text-foreground">
+              {formatDate(currentDateStr)}
+            </span>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-background"
+              onClick={handleNextDay}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+          <div
+            className={`px-3 py-1.5 font-semibold text-sm rounded-md border ${netSubtotal >= 0 ? 'bg-success/10 text-success border-success/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}
+          >
+            Subtotal Dia: {netSubtotal > 0 ? '+' : ''}
+            {formatCurrency(netSubtotal)}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="p-0 sm:p-6 sm:pt-0 overflow-x-auto">
         <Table className="min-w-[800px]">
@@ -48,7 +109,7 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
                   colSpan={full ? 10 : 8}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  Nenhuma transação encontrada no período.
+                  Nenhuma transação encontrada no dia selecionado.
                 </TableCell>
               </TableRow>
             ) : (
