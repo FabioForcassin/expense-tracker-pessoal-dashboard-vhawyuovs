@@ -11,6 +11,7 @@ import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
 import { InsightsSection } from '@/components/dashboard/InsightsSection'
 import { PaymentTypeChart } from '@/components/dashboard/PaymentTypeChart'
 import { PredictabilityChart } from '@/components/dashboard/PredictabilityChart'
+import { FutureExpensesTable } from '@/components/dashboard/FutureExpensesTable'
 
 export default function Index() {
   return (
@@ -58,6 +59,7 @@ export default function Index() {
           <PredictabilityChart />
         </div>
 
+        <FutureExpensesTable />
         <TransactionsTable />
       </div>
     </div>
