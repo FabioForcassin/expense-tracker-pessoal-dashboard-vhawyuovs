@@ -30,7 +30,7 @@ CREATE POLICY "Users can update their own expenses" ON public.expenses
 CREATE POLICY "Users can delete their own expenses" ON public.expenses
     FOR DELETE USING (auth.uid() = user_id);
 
-DO $
+DO $$
 DECLARE
   new_user_id uuid;
 BEGIN
@@ -76,4 +76,4 @@ BEGIN
   (new_user_id, 'Parcela Carro', 1500.0, 'Transporte', '2026-05-10T00:00:00Z', 'Financiamento do Carro', 'Fixa', 'Itaú', 'Parcela 27/36', 'Pessoal', 'Fabio', 5, 'Mai'),
   (new_user_id, 'Parcela Carro', 1500.0, 'Transporte', '2026-06-10T00:00:00Z', 'Financiamento do Carro', 'Fixa', 'Itaú', 'Parcela 28/36', 'Pessoal', 'Fabio', 6, 'Jun'),
   (new_user_id, 'Seguro Residencial', 1200.0, 'Moradia', '2026-10-15T00:00:00Z', 'Seguro Residencial', 'Fixa', 'CC Itaú visa infinity', 'Parcela Única', 'Pessoal', 'Fabio', 10, 'Out');
-END $;
+END $$;
