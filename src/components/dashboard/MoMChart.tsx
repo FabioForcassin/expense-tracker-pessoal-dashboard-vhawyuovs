@@ -9,7 +9,7 @@ import {
   Legend,
   LabelList,
 } from 'recharts'
-import { useFilteredExpenses } from '@/stores/DashboardContext'
+import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart'
 import { BarChart3 } from 'lucide-react'
@@ -31,6 +31,7 @@ const monthNames: Record<string, string> = {
 
 export function MoMChart() {
   const allExpenses = useFilteredExpenses(false)
+  const { budget, selectedPrimaryCat, selectedSecondaryCats, categories } = useDashboard()
 
   const allMonths = Array.from(
     new Set(
@@ -50,20 +51,38 @@ export function MoMChart() {
     const receitas = monthExpenses
       .filter((e) => e.primaryCategory === 'Receitas')
       .reduce((a, b) => a + b.value, 0)
-    const despesas = monthExpenses
+    const realizado = monthExpenses
       .filter((e) => e.primaryCategory !== 'Receitas')
       .reduce((a, b) => a + b.value, 0)
+
+    let orcamento = 0
+    Object.entries(budget).forEach(([key, value]) => {
+      if (key.endsWith(`|${monthStr}`)) {
+        const [catName, subCatName] = key.split('|')
+        if (selectedPrimaryCat) {
+          const cat = categories.find((c) => c.id === selectedPrimaryCat)
+          if (cat && cat.name !== catName) return
+          if (selectedSecondaryCats.length > 0 && !selectedSecondaryCats.includes(subCatName))
+            return
+        } else {
+          if (catName === 'Receitas') return
+        }
+        orcamento += value
+      }
+    })
 
     return {
       name: `${monthNames[m]} ${y.slice(2)}`,
       receitas,
-      despesas,
+      realizado,
+      orcamento,
     }
   })
 
   const chartConfig = {
     receitas: { label: 'Receitas', color: 'hsl(var(--success))' },
-    despesas: { label: 'Despesas', color: 'hsl(var(--destructive))' },
+    realizado: { label: 'Realizado', color: 'hsl(var(--destructive))' },
+    orcamento: { label: 'Orçamento', color: 'hsl(var(--primary))' },
   }
 
   const formatK = (val: number) => (val > 0 ? `${(val / 1000).toFixed(1).replace('.0', '')}k` : '')
@@ -108,7 +127,7 @@ export function MoMChart() {
                   dataKey="receitas"
                   fill="var(--color-receitas)"
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
+                  maxBarSize={30}
                 >
                   <LabelList
                     dataKey="receitas"
@@ -119,13 +138,27 @@ export function MoMChart() {
                   />
                 </Bar>
                 <Bar
-                  dataKey="despesas"
-                  fill="var(--color-despesas)"
+                  dataKey="realizado"
+                  fill="var(--color-realizado)"
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={40}
+                  maxBarSize={30}
                 >
                   <LabelList
-                    dataKey="despesas"
+                    dataKey="realizado"
+                    position="top"
+                    formatter={formatK}
+                    className="fill-foreground font-semibold text-[10px]"
+                    offset={4}
+                  />
+                </Bar>
+                <Bar
+                  dataKey="orcamento"
+                  fill="var(--color-orcamento)"
+                  radius={[4, 4, 0, 0]}
+                  maxBarSize={30}
+                >
+                  <LabelList
+                    dataKey="orcamento"
                     position="top"
                     formatter={formatK}
                     className="fill-foreground font-semibold text-[10px]"

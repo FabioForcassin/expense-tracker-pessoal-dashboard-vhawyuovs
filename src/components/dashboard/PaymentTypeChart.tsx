@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LabelList,
 } from 'recharts'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -35,6 +36,9 @@ export function PaymentTypeChart() {
     value: { label: 'Gasto' },
   }
 
+  const formatCurrency = (value: number) =>
+    `R$ ${value >= 1000 ? (value / 1000).toFixed(1).replace('.0', '') + 'k' : value}`
+
   return (
     <Card className="glass h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -51,7 +55,7 @@ export function PaymentTypeChart() {
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={rawData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={rawData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid
                   vertical={false}
                   strokeDasharray="3 3"
@@ -82,6 +86,13 @@ export function PaymentTypeChart() {
                   {rawData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.fill} />
                   ))}
+                  <LabelList
+                    dataKey="value"
+                    position="top"
+                    formatter={formatCurrency}
+                    className="fill-foreground font-semibold text-[10px]"
+                    offset={4}
+                  />
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

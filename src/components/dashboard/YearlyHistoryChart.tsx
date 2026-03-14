@@ -6,27 +6,45 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Cell,
   LabelList,
+  Legend,
 } from 'recharts'
-import { useFilteredExpenses } from '@/stores/DashboardContext'
+import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
+import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart'
 import { History } from 'lucide-react'
 
 export function YearlyHistoryChart() {
-  // Pass applyMonthFilter = false to get full year history ignoring Month & Year selects
   const allExpenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
+  const { budget, selectedPrimaryCat, selectedSecondaryCats, categories } = useDashboard()
 
   const years = ['2024', '2025', '2026']
   const data = years.map((year) => {
     const yearExpenses = allExpenses.filter((e) => e.date.startsWith(year))
-    const total = yearExpenses.reduce((sum, e) => sum + e.value, 0)
-    return { year, value: total, fill: 'hsl(var(--chart-3))' }
+    const realizado = yearExpenses.reduce((sum, e) => sum + e.value, 0)
+
+    let orcamento = 0
+    Object.entries(budget).forEach(([key, value]) => {
+      if (key.includes(`|${year}-`)) {
+        const [catName, subCatName] = key.split('|')
+        if (selectedPrimaryCat) {
+          const cat = categories.find((c) => c.id === selectedPrimaryCat)
+          if (cat && cat.name !== catName) return
+          if (selectedSecondaryCats.length > 0 && !selectedSecondaryCats.includes(subCatName))
+            return
+        } else {
+          if (catName === 'Receitas') return
+        }
+        orcamento += value
+      }
+    })
+
+    return { year, realizado, orcamento }
   })
 
   const chartConfig = {
-    value: { label: 'Gasto Total' },
+    realizado: { label: 'Realizado', color: 'hsl(var(--destructive))' },
+    orcamento: { label: 'Orçamento', color: 'hsl(var(--primary))' },
   }
 
   const formatK = (val: number) => (val > 0 ? `${(val / 1000).toFixed(1).replace('.0', '')}k` : '')
@@ -61,16 +79,29 @@ export function YearlyHistoryChart() {
                 content={<ChartTooltipContent />}
                 cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={60}>
-                {data.map((entry, index) => (
-                  <Cell
-                    key={`cell-${index}`}
-                    fill={entry.value > 0 ? entry.fill : 'hsl(var(--muted))'}
-                    opacity={entry.value > 0 ? 1 : 0.2}
-                  />
-                ))}
+              <Legend content={<ChartLegendContent />} />
+              <Bar
+                dataKey="realizado"
+                fill="var(--color-realizado)"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={40}
+              >
                 <LabelList
-                  dataKey="value"
+                  dataKey="realizado"
+                  position="top"
+                  formatter={formatK}
+                  className="fill-foreground font-semibold text-xs"
+                  offset={6}
+                />
+              </Bar>
+              <Bar
+                dataKey="orcamento"
+                fill="var(--color-orcamento)"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={40}
+              >
+                <LabelList
+                  dataKey="orcamento"
                   position="top"
                   formatter={formatK}
                   className="fill-foreground font-semibold text-xs"
