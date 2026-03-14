@@ -1,29 +1,31 @@
+import { DynamicHeader } from '@/components/dashboard/DynamicHeader'
 import { FilterSection } from '@/components/dashboard/FilterSection'
 import { KPICards } from '@/components/dashboard/KPICards'
-import { BudgetVsActualChart } from '@/components/dashboard/BudgetVsActualChart'
-import { CategoryDistributionChart } from '@/components/dashboard/CategoryDistributionChart'
 import { CumulativeSpendingChart } from '@/components/dashboard/CumulativeSpendingChart'
-import { CompositionBarChart } from '@/components/dashboard/CompositionBarChart'
+import { CategoryDistributionChart } from '@/components/dashboard/CategoryDistributionChart'
+import { MoMChart } from '@/components/dashboard/MoMChart'
+import { TopExpensesList } from '@/components/dashboard/TopExpensesList'
 import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
 
 export default function Index() {
   return (
-    <div className="max-w-7xl mx-auto flex flex-col gap-2">
+    <div className="max-w-7xl mx-auto flex flex-col gap-4 animate-fade-in pb-8">
+      <DynamicHeader />
       <FilterSection />
       <KPICards />
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-4 lg:mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-2">
         <div className="lg:col-span-2">
-          <BudgetVsActualChart />
+          <CumulativeSpendingChart />
         </div>
         <div className="lg:col-span-1">
-          <CategoryDistributionChart />
+          <TopExpensesList />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-4 lg:mb-6">
-        <CumulativeSpendingChart />
-        <CompositionBarChart />
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-4">
+        <MoMChart />
+        <CategoryDistributionChart />
       </div>
 
       <TransactionsTable />

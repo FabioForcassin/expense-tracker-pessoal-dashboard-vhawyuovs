@@ -1,8 +1,17 @@
-import { Pie, PieChart, Tooltip, Cell, ResponsiveContainer } from 'recharts'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from 'recharts'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
-import { formatCurrency } from '@/lib/format'
+import { Layers } from 'lucide-react'
 
 export function CategoryDistributionChart() {
   const { categories, expenses, selectedPrimaryCat, selectedMonths } = useDashboard()
@@ -24,6 +33,7 @@ export function CategoryDistributionChart() {
         color: c.color,
       }))
       .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value)
   } else {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
     if (cat && cat.name !== 'Receitas') {
@@ -37,25 +47,30 @@ export function CategoryDistributionChart() {
           color: `hsl(${baseHue}, ${70 - idx * 5}%, ${50 + idx * 5}%)`,
         }))
         .filter((d) => d.value > 0)
+        .sort((a, b) => b.value - a.value)
     }
   }
 
-  const chartConfig: Record<string, any> = {}
+  const chartConfig: Record<string, any> = {
+    value: { label: 'Gasto' },
+  }
+
   const data = rawData.map((d, i) => {
     const key = `cat_${i}`
     chartConfig[key] = { label: d.name, color: d.color }
     return { ...d, fill: `var(--color-${key})` }
   })
 
-  const total = data.reduce((a, b) => a + b.value, 0)
-
-  if (total === 0) {
+  if (data.length === 0) {
     return (
       <Card className="h-full glass flex flex-col">
         <CardHeader className="pb-0">
-          <CardTitle className="text-base font-semibold">Distribuição</CardTitle>
+          <CardTitle className="text-base font-semibold flex items-center gap-2">
+            <Layers className="w-4 h-4 text-primary" />
+            Composição de Gastos
+          </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 flex items-center justify-center min-h-[250px]">
+        <CardContent className="flex-1 flex items-center justify-center min-h-[280px]">
           <p className="text-muted-foreground text-sm">Sem despesas no período.</p>
         </CardContent>
       </Card>
@@ -64,38 +79,49 @@ export function CategoryDistributionChart() {
 
   return (
     <Card className="h-full glass flex flex-col">
-      <CardHeader className="pb-0">
-        <CardTitle className="text-base font-semibold">Composição de Gastos</CardTitle>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Layers className="w-4 h-4 text-primary" />
+          Composição de Gastos
+        </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col justify-center pb-6 min-h-[250px] relative w-full">
+      <CardContent className="flex-1 min-h-[280px] w-full">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Tooltip content={<ChartTooltipContent hideLabel />} />
-              <Pie
-                data={data}
-                dataKey="value"
-                nameKey="name"
-                innerRadius="65%"
-                outerRadius="90%"
-                strokeWidth={4}
-                stroke="hsl(var(--background))"
-                paddingAngle={2}
-              >
+            <BarChart
+              data={data}
+              layout="vertical"
+              margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid
+                strokeDasharray="3 3"
+                horizontal={true}
+                vertical={false}
+                stroke="hsl(var(--border))"
+                opacity={0.4}
+              />
+              <XAxis type="number" hide />
+              <YAxis
+                dataKey="name"
+                type="category"
+                width={100}
+                tickLine={false}
+                axisLine={false}
+                className="text-xs font-medium"
+                tick={{ fill: 'hsl(var(--foreground))' }}
+              />
+              <Tooltip
+                content={<ChartTooltipContent />}
+                cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+              />
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
                 {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                  <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
-              </Pie>
-            </PieChart>
+              </Bar>
+            </BarChart>
           </ResponsiveContainer>
         </ChartContainer>
-
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-4">
-          <span className="text-xl font-bold tracking-tight text-foreground">
-            {formatCurrency(total).split(',')[0]}
-          </span>
-          <span className="text-xs font-medium text-muted-foreground">Total</span>
-        </div>
       </CardContent>
     </Card>
   )

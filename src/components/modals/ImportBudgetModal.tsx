@@ -7,7 +7,16 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { UploadCloud, FileSpreadsheet, CheckCircle2 } from 'lucide-react'
+import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { UploadCloud, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
@@ -19,6 +28,8 @@ interface ImportDataModalProps {
 export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
   const [files, setFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
+  const [importType, setImportType] = useState<'realizado' | 'orcamento'>('realizado')
+  const [year, setYear] = useState('2024')
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -43,18 +54,11 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
     if (files.length === 0) return
     setIsProcessing(true)
     setTimeout(() => {
-      toast.success('Lote de dados importado com sucesso! O painel foi atualizado.')
+      toast.success(`Lote de dados (${importType} - ${year}) importado com sucesso!`)
       setFiles([])
       setIsProcessing(false)
       onOpenChange(false)
     }, 1500)
-  }
-
-  const determineFileType = (filename: string) => {
-    const lower = filename.toLowerCase()
-    if (lower.includes('realizado')) return 'Realizado'
-    if (lower.includes('orçamento') || lower.includes('orcamento')) return 'Orçamento'
-    return 'Desconhecido'
   }
 
   return (
@@ -68,23 +72,48 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
         <DialogHeader>
           <DialogTitle className="text-xl flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-primary" />
-            Importação em Lote
+            Importação Inteligente
           </DialogTitle>
           <DialogDescription>
-            Faça o upload de múltiplas planilhas para atualizar o Realizado ou Orçamento.
+            Faça o upload de planilhas de anos fiscais diferentes para atualizar seus dados.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="bg-muted/40 p-3 rounded-lg text-xs text-muted-foreground border border-border/50 mb-2">
-          <p className="font-medium text-foreground mb-1">Dica de Nomenclatura:</p>
-          <p>
-            Arquivos com "realizado" no nome atualizam transações reais. Arquivos com "orçamento"
-            atualizam metas.
-          </p>
+        <div className="grid grid-cols-2 gap-6 my-2">
+          <div className="space-y-3">
+            <Label className="text-foreground">Qual o tipo de importação?</Label>
+            <RadioGroup defaultValue={importType} onValueChange={(v: any) => setImportType(v)}>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="realizado" id="r1" />
+                <Label htmlFor="r1" className="cursor-pointer font-normal">
+                  Realizado
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="orcamento" id="r2" />
+                <Label htmlFor="r2" className="cursor-pointer font-normal">
+                  Orçamento
+                </Label>
+              </div>
+            </RadioGroup>
+          </div>
+          <div className="space-y-3">
+            <Label className="text-foreground">Selecione o Ano</Label>
+            <Select value={year} onValueChange={setYear}>
+              <SelectTrigger>
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="2024">2024</SelectItem>
+                <SelectItem value="2025">2025</SelectItem>
+                <SelectItem value="2026">2026</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <label
-          className="flex flex-col items-center justify-center border-2 border-dashed border-primary/30 rounded-lg p-8 bg-primary/5 transition-colors hover:bg-primary/10 cursor-pointer group mb-4"
+          className="flex flex-col items-center justify-center border-2 border-dashed border-primary/30 rounded-lg p-8 bg-primary/5 transition-colors hover:bg-primary/10 cursor-pointer group mt-2 mb-4"
           onDragOver={(e) => e.preventDefault()}
           onDrop={handleDrop}
         >
@@ -107,30 +136,16 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
             <p className="text-sm font-semibold mb-2">Arquivos Prontos ({files.length}):</p>
             <ScrollArea className="h-[120px] w-full rounded-md border border-border/50 bg-background/50 p-2">
               <div className="flex flex-col gap-2">
-                {files.map((f, i) => {
-                  const type = determineFileType(f.name)
-                  return (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-2 text-sm bg-background rounded border border-border/40 shadow-sm"
-                    >
-                      <span className="truncate max-w-[200px] font-medium" title={f.name}>
-                        {f.name}
-                      </span>
-                      <span
-                        className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                          type === 'Realizado'
-                            ? 'bg-primary/10 text-primary'
-                            : type === 'Orçamento'
-                              ? 'bg-amber-500/10 text-amber-600'
-                              : 'bg-muted text-muted-foreground'
-                        }`}
-                      >
-                        {type}
-                      </span>
-                    </div>
-                  )
-                })}
+                {files.map((f, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between p-2 text-sm bg-background rounded border border-border/40 shadow-sm"
+                  >
+                    <span className="truncate max-w-[200px] font-medium" title={f.name}>
+                      {f.name}
+                    </span>
+                  </div>
+                ))}
               </div>
             </ScrollArea>
           </div>

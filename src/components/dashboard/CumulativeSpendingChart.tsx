@@ -1,117 +1,111 @@
 import {
-  Line,
-  LineChart,
-  CartesianGrid,
+  Area,
+  AreaChart,
   XAxis,
   Tooltip,
   ResponsiveContainer,
   YAxis,
+  ReferenceLine,
 } from 'recharts'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
+import { Activity } from 'lucide-react'
 
 export function CumulativeSpendingChart() {
   const { expenses, selectedMonths, selectedPrimaryCat, selectedSecondaryCats, categories } =
     useDashboard()
 
   const allMonthExpenses = expenses.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
-  const totalReceitas =
-    allMonthExpenses
-      .filter((e) => e.primaryCategory === 'Receitas')
-      .reduce((sum, e) => sum + e.value, 0) || 10000
 
   let filteredExpenses = allMonthExpenses.filter((e) => e.primaryCategory !== 'Receitas')
-  let activeBudget = totalReceitas
 
   if (selectedPrimaryCat && selectedPrimaryCat !== 'cat_receitas') {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
     filteredExpenses = filteredExpenses.filter((e) => e.primaryCategory === cat?.name)
-    activeBudget = totalReceitas * 0.2
 
     if (selectedSecondaryCats.length > 0) {
       filteredExpenses = filteredExpenses.filter((e) =>
         selectedSecondaryCats.includes(e.secondaryCategory),
       )
-      activeBudget = totalReceitas * 0.05
     }
   }
 
-  // Calculate days in month (max of selected months or standard 31)
-  const daysInMonth = 31
+  const daysInMonth = 30
+  let cumulative = 0
 
   const data = Array.from({ length: daysInMonth }, (_, i) => {
     const day = i + 1
-    const dailyExpenses = filteredExpenses.filter((e) => parseInt(e.date.split('-')[2]) <= day)
-    const cumulative = dailyExpenses.reduce((sum, e) => sum + e.value, 0)
-    const ideal = (activeBudget / daysInMonth) * day
+    const dailyExpenses = filteredExpenses.filter((e) => {
+      const d = parseInt(e.date.split('-')[2], 10)
+      return d === day
+    })
+    const dailyTotal = dailyExpenses.reduce((sum, e) => sum + e.value, 0)
+    cumulative += dailyTotal
 
-    return { day, cumulative, ideal }
+    return { day, value: cumulative }
   })
 
   const chartConfig = {
-    cumulative: { label: 'Acumulado', color: 'hsl(var(--primary))' },
-    ideal: { label: 'Ritmo Seguro', color: 'hsl(var(--success)/0.5)' },
+    value: { label: 'Gasto Acumulado', color: 'hsl(var(--primary))' },
   }
 
   return (
-    <Card className="glass mb-6 w-full h-full flex flex-col">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Evolução de Gastos (Dias do Mês)</CardTitle>
+    <Card className="glass h-full flex flex-col">
+      <CardHeader className="pb-0 flex flex-row items-center justify-between">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Activity className="w-4 h-4 text-primary" />
+          Evolução do Gasto (30 Dias)
+        </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 w-full min-h-[260px]">
-        <ChartContainer config={chartConfig} className="h-full w-full mt-4">
+      <CardContent className="flex-1 w-full min-h-[280px] mt-4 pb-2">
+        <ChartContainer config={chartConfig} className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid
-                vertical={false}
-                strokeDasharray="4 4"
-                stroke="hsl(var(--border))"
-                opacity={0.5}
-              />
+            <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-value)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-value)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
               <XAxis
                 dataKey="day"
                 tickLine={false}
                 axisLine={false}
-                tickMargin={12}
-                minTickGap={20}
-                className="text-xs font-medium"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                tickMargin={10}
+                minTickGap={3}
+                tickFormatter={(val) => `${val}d`}
+                className="text-xs font-medium fill-muted-foreground"
               />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(value) =>
-                  `R$${value >= 1000 ? (value / 1000).toFixed(1) + 'k' : value}`
-                }
-                className="text-xs font-medium"
-                tick={{ fill: 'hsl(var(--muted-foreground))' }}
+              <YAxis hide domain={['dataMin', 'dataMax + 1000']} />
+              <Tooltip
+                content={<ChartTooltipContent />}
+                cursor={{
+                  stroke: 'hsl(var(--primary)/0.2)',
+                  strokeWidth: 2,
+                  strokeDasharray: '4 4',
+                }}
               />
-              <Tooltip content={<ChartTooltipContent />} />
-              <Line
+              <Area
                 type="monotone"
-                dataKey="cumulative"
-                name="cumulative"
-                stroke="var(--color-cumulative)"
+                dataKey="value"
+                stroke="var(--color-value)"
                 strokeWidth={3}
-                dot={false}
+                fillOpacity={1}
+                fill="url(#colorValue)"
                 activeDot={{
                   r: 6,
-                  fill: 'var(--color-cumulative)',
+                  fill: 'var(--color-value)',
                   stroke: 'hsl(var(--background))',
                   strokeWidth: 2,
                 }}
               />
-              <Line
-                type="dashed"
-                dataKey="ideal"
-                name="ideal"
-                stroke="var(--color-ideal)"
-                strokeWidth={2}
-                strokeDasharray="6 6"
-                dot={false}
+              <ReferenceLine
+                y={data[data.length - 1].value}
+                stroke="hsl(var(--muted-foreground)/0.2)"
+                strokeDasharray="3 3"
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         </ChartContainer>
       </CardContent>
