@@ -12,9 +12,9 @@ import { Badge } from '@/components/ui/badge'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { ArrowDownRight, ArrowUpRight, CalendarClock } from 'lucide-react'
+import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 
 export function FutureExpensesTable({ full = false }: { full?: boolean }) {
-  // Use globally filtered expenses
   const filteredExpenses = useFilteredExpenses(true)
 
   const finalData = useMemo(() => {
@@ -22,7 +22,6 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
     const lastDayOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0)
     const lastDayStr = `${lastDayOfMonth.getFullYear()}-${(lastDayOfMonth.getMonth() + 1).toString().padStart(2, '0')}-${lastDayOfMonth.getDate().toString().padStart(2, '0')}`
 
-    // Extract future entries from the globally filtered list
     let future = filteredExpenses.filter((e) => e.date > lastDayStr)
     future = future.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     return full ? future : future.slice(0, 10)
@@ -78,17 +77,26 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap font-medium">
                         {formatDate(tx.date)}
                       </TableCell>
-                      <TableCell className="font-medium text-foreground text-sm flex items-center gap-2">
-                        {isIncome ? (
-                          <div className="w-6 h-6 rounded-full bg-success/10 flex items-center justify-center text-success shrink-0">
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                          </div>
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                            <ArrowDownRight className="w-3.5 h-3.5" />
-                          </div>
-                        )}
-                        {tx.establishment}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {isIncome ? (
+                            <div className="w-6 h-6 rounded-full bg-success/10 flex items-center justify-center text-success shrink-0">
+                              <ArrowUpRight className="w-3.5 h-3.5" />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                              <ArrowDownRight className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                          <span className="font-medium text-foreground text-sm truncate">
+                            {tx.establishment}
+                          </span>
+                          <InstallmentBadge
+                            isInstallment={tx.isInstallment}
+                            current={tx.currentInstallment}
+                            total={tx.totalInstallments}
+                          />
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm">{tx.primaryCategory}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">

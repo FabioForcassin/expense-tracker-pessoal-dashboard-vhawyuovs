@@ -50,6 +50,7 @@ export function FilterSection() {
     selectedPaymentMethods,
     togglePaymentMethod,
     expenses,
+    dbPaymentMethods,
   } = useDashboard()
 
   const activeCategory = categories.find((c) => c.id === selectedPrimaryCat)
@@ -61,8 +62,12 @@ export function FilterSection() {
   }, [expenses])
 
   const availablePayments = useMemo(() => {
-    return Array.from(new Set(expenses.map((e) => e.paymentMethod).filter(Boolean))).sort()
-  }, [expenses])
+    const unique = new Set(expenses.map((e) => e.paymentMethod).filter(Boolean))
+    if (dbPaymentMethods) {
+      dbPaymentMethods.forEach((pm) => unique.add(pm.name))
+    }
+    return Array.from(unique).sort()
+  }, [expenses, dbPaymentMethods])
 
   return (
     <div className="flex flex-col gap-4">

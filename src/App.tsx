@@ -8,7 +8,9 @@ import Layout from './components/layout/Layout'
 import Index from './pages/Index'
 import Database from './pages/Database'
 import Reports from './pages/Reports'
-import Settings from './pages/Settings'
+import Management from './pages/Management'
+import Predictability from './pages/Predictability'
+import Goals from './pages/Goals'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
 import { ReactNode } from 'react'
@@ -37,9 +39,11 @@ const App = () => (
               }
             >
               <Route path="/" element={<Index />} />
+              <Route path="/predictability" element={<Predictability />} />
+              <Route path="/goals" element={<Goals />} />
+              <Route path="/management" element={<Management />} />
               <Route path="/database" element={<Database />} />
               <Route path="/reports" element={<Reports />} />
-              <Route path="/settings" element={<Settings />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

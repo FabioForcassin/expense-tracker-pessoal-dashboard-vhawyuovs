@@ -1,5 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, FileText, Settings, Wallet, Database } from 'lucide-react'
+import {
+  LayoutDashboard,
+  FileText,
+  Settings,
+  Wallet,
+  Database,
+  CalendarClock,
+  Target,
+} from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -15,11 +23,16 @@ import {
 export function AppSidebar() {
   const location = useLocation()
 
-  const items = [
-    { title: 'Dashboard', url: '/', icon: LayoutDashboard },
+  const mainItems = [
+    { title: 'Visão Geral', url: '/', icon: LayoutDashboard },
+    { title: 'Previsibilidade', url: '/predictability', icon: CalendarClock },
+    { title: 'Metas', url: '/goals', icon: Target },
+    { title: 'Gerenciamento', url: '/management', icon: Settings },
+  ]
+
+  const advancedItems = [
     { title: 'Banco de Dados', url: '/database', icon: Database },
     { title: 'Relatórios', url: '/reports', icon: FileText },
-    { title: 'Configurações', url: '/settings', icon: Settings },
   ]
 
   return (
@@ -33,11 +46,36 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70 mt-2">
-            Menu Principal
+            Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1 mt-2">
-              {items.map((item) => (
+              {mainItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === item.url}
+                    tooltip={item.title}
+                    className="font-medium"
+                  >
+                    <Link to={item.url}>
+                      <item.icon className="w-4 h-4 opacity-70" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-4">
+          <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+            Avançado
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1 mt-2">
+              {advancedItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

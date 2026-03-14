@@ -9,6 +9,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          icon: string | null
+          id: string
+          name: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          icon?: string | null
+          id?: string
+          name?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       expenses: {
         Row: {
           amount: number
@@ -62,6 +92,35 @@ export type Database = {
           who?: string | null
         }
         Relationships: []
+      }
+      subcategories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'subcategories_category_id_fkey'
+            columns: ['category_id']
+            isOneToOne: false
+            referencedRelation: 'categories'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Views: {
@@ -210,6 +269,14 @@ export const Constants = {
 // --- COLUMN TYPES (actual PostgreSQL types) ---
 // Use this to know the real database type when writing migrations.
 // "string" in TypeScript types above may be uuid, text, varchar, timestamptz, etc.
+// Table: categories
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   name: text (not null)
+//   type: text (not null)
+//   color: text (nullable, default: 'hsl(220 70% 50%)'::text)
+//   icon: text (nullable, default: 'Layers'::text)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: expenses
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)
@@ -226,13 +293,27 @@ export const Constants = {
 //   month_num: integer (nullable)
 //   competency: text (nullable)
 //   created_at: timestamp with time zone (not null, default: now())
+// Table: subcategories
+//   id: uuid (not null, default: gen_random_uuid())
+//   category_id: uuid (not null)
+//   name: text (not null)
+//   created_at: timestamp with time zone (not null, default: now())
 
 // --- CONSTRAINTS ---
+// Table: categories
+//   PRIMARY KEY categories_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY categories_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 // Table: expenses
 //   PRIMARY KEY expenses_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY expenses_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+// Table: subcategories
+//   FOREIGN KEY subcategories_category_id_fkey: FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+//   PRIMARY KEY subcategories_pkey: PRIMARY KEY (id)
 
 // --- ROW LEVEL SECURITY POLICIES ---
+// Table: categories
+//   Policy "Users can manage their own categories" (ALL, PERMISSIVE) roles={public}
+//     USING: (auth.uid() = user_id)
 // Table: expenses
 //   Policy "Users can delete their own expenses" (DELETE, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = user_id)
@@ -242,6 +323,9 @@ export const Constants = {
 //     USING: (auth.uid() = user_id)
 //   Policy "Users can view their own expenses" (SELECT, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = user_id)
+// Table: subcategories
+//   Policy "Users can manage their own subcategories" (ALL, PERMISSIVE) roles={public}
+//     USING: (category_id IN ( SELECT categories.id    FROM categories   WHERE (categories.user_id = auth.uid())))
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION rls_auto_enable()

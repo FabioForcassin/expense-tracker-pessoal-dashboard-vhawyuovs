@@ -1,5 +1,13 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react'
-import { Expense, AppCategory, BudgetStore, getAccountType, DBCategory } from '@/types'
+import {
+  Expense,
+  AppCategory,
+  BudgetStore,
+  getAccountType,
+  DBCategory,
+  DBGoal,
+  DBPaymentMethod,
+} from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -244,6 +252,8 @@ interface DashboardContextType {
   customCategories: DBCategory[]
   expenses: Expense[]
   budget: BudgetStore
+  goals: DBGoal[]
+  dbPaymentMethods: DBPaymentMethod[]
   selectedYear: string
   setSelectedYear: (y: string) => void
   selectedMonthValues: string[]
@@ -271,6 +281,9 @@ interface DashboardContextType {
   deleteCategory: (id: string) => Promise<void>
   addSubcategory: (categoryId: string, name: string) => Promise<void>
   deleteSubcategory: (id: string) => Promise<void>
+  upsertGoal: (month: number, year: number, amount: number) => Promise<void>
+  addPaymentMethod: (name: string, type: string) => Promise<void>
+  deletePaymentMethod: (id: string) => Promise<void>
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
@@ -280,6 +293,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [customCategories, setCustomCategories] = useState<DBCategory[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [budget, setBudget] = useState<BudgetStore>(generateInitialBudget())
+  const [goals, setGoals] = useState<DBGoal[]>([])
+  const [dbPaymentMethods, setDbPaymentMethods] = useState<DBPaymentMethod[]>([])
 
   const [selectedYear, setSelectedYear] = useState<string>('2026')
   const [selectedMonthValues, setSelectedMonthValues] = useState<string[]>([
@@ -296,9 +311,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     if (user) {
       fetchExpenses()
       fetchCustomCategories()
+      fetchGoals()
+      fetchPaymentMethods()
     } else {
       setExpenses([])
       setCustomCategories([])
+      setGoals([])
+      setDbPaymentMethods([])
     }
   }, [user])
 
@@ -326,6 +345,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       comment: d.comment,
       classification: d.classification,
       who: d.who,
+      isInstallment: d.is_installment,
+      currentInstallment: d.current_installment,
+      totalInstallments: d.total_installments,
     }))
     setExpenses(mapped)
   }
@@ -341,6 +363,28 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       return
     }
     setCustomCategories(data || [])
+  }
+
+  const fetchGoals = async () => {
+    if (!user) return
+    const { data, error } = await supabase
+      .from('goals' as any)
+      .select('*')
+      .eq('user_id', user.id)
+    if (!error && data) {
+      setGoals(data)
+    }
+  }
+
+  const fetchPaymentMethods = async () => {
+    if (!user) return
+    const { data, error } = await supabase
+      .from('payment_methods' as any)
+      .select('*')
+      .eq('user_id', user.id)
+    if (!error && data) {
+      setDbPaymentMethods(data)
+    }
   }
 
   const categories = useMemo<AppCategory[]>(() => {
@@ -407,6 +451,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       who: e.who,
       month_num: e.monthNum,
       competency: e.competency,
+      is_installment: e.isInstallment || false,
+      current_installment: e.currentInstallment || null,
+      total_installments: e.totalInstallments || null,
     }))
     const { data, error } = await supabase
       .from('expenses' as any)
@@ -430,6 +477,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       comment: d.comment,
       classification: d.classification,
       who: d.who,
+      isInstallment: d.is_installment,
+      currentInstallment: d.current_installment,
+      totalInstallments: d.total_installments,
     }))
     setExpenses((prev) => [...prev, ...newExpenses])
   }
@@ -540,6 +590,50 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const upsertGoal = async (month: number, year: number, amount: number) => {
+    if (!user) return
+    const existing = goals.find((g) => g.month === month && g.year === year)
+    if (existing) {
+      const { error, data } = await supabase
+        .from('goals' as any)
+        .update({ amount })
+        .eq('id', existing.id)
+        .select()
+      if (!error && data) {
+        setGoals((prev) => prev.map((g) => (g.id === existing.id ? data[0] : g)))
+      }
+    } else {
+      const { error, data } = await supabase
+        .from('goals' as any)
+        .insert({ user_id: user.id, month, year, amount })
+        .select()
+      if (!error && data) {
+        setGoals((prev) => [...prev, data[0]])
+      }
+    }
+  }
+
+  const addPaymentMethod = async (name: string, type: string) => {
+    if (!user) return
+    const { data, error } = await supabase
+      .from('payment_methods' as any)
+      .insert({ user_id: user.id, name, type })
+      .select()
+    if (!error && data) {
+      setDbPaymentMethods((prev) => [...prev, data[0]])
+    }
+  }
+
+  const deletePaymentMethod = async (id: string) => {
+    const { error } = await supabase
+      .from('payment_methods' as any)
+      .delete()
+      .eq('id', id)
+    if (!error) {
+      setDbPaymentMethods((prev) => prev.filter((pm) => pm.id !== id))
+    }
+  }
+
   return (
     <DashboardContext.Provider
       value={{
@@ -547,6 +641,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         customCategories,
         expenses,
         budget,
+        goals,
+        dbPaymentMethods,
         selectedYear,
         setSelectedYear,
         selectedMonthValues,
@@ -574,6 +670,9 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         deleteCategory,
         addSubcategory,
         deleteSubcategory,
+        upsertGoal,
+        addPaymentMethod,
+        deletePaymentMethod,
       }}
     >
       {children}

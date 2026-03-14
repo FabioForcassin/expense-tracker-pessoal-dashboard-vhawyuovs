@@ -13,6 +13,9 @@ export interface Expense {
   classification: string // Pessoal/Empresa
   who: string // Quem
   installments?: number // Parcelas
+  isInstallment?: boolean
+  currentInstallment?: number
+  totalInstallments?: number
 }
 
 export type BudgetStore = Record<string, number> // Format: "categoryName|subcategoryName|YYYY-MM": value
@@ -43,6 +46,21 @@ export interface DBSubcategory {
   id: string
   category_id: string
   name: string
+}
+
+export interface DBGoal {
+  id: string
+  user_id: string
+  month: number
+  year: number
+  amount: number
+}
+
+export interface DBPaymentMethod {
+  id: string
+  user_id: string
+  name: string
+  type: string
 }
 
 export interface MonthlyData {

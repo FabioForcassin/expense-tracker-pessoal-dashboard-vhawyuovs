@@ -25,11 +25,11 @@ import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { ArrowDownRight, ArrowUpRight, Database, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 
 export function DatabaseTransactionsTable() {
   const { deleteExpenses } = useDashboard()
 
-  // Use globally filtered expenses
   const filteredDataRaw = useFilteredExpenses(true)
   const filteredData = [...filteredDataRaw].sort(
     (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
@@ -155,17 +155,26 @@ export function DatabaseTransactionsTable() {
                       <TableCell className="text-muted-foreground whitespace-nowrap font-medium">
                         {formatDate(tx.date)}
                       </TableCell>
-                      <TableCell className="font-medium text-foreground flex items-center gap-2">
-                        {isIncome ? (
-                          <div className="w-6 h-6 rounded-full bg-success/10 flex items-center justify-center text-success shrink-0">
-                            <ArrowUpRight className="w-3.5 h-3.5" />
-                          </div>
-                        ) : (
-                          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                            <ArrowDownRight className="w-3.5 h-3.5" />
-                          </div>
-                        )}
-                        {tx.establishment}
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {isIncome ? (
+                            <div className="w-6 h-6 rounded-full bg-success/10 flex items-center justify-center text-success shrink-0">
+                              <ArrowUpRight className="w-3.5 h-3.5" />
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                              <ArrowDownRight className="w-3.5 h-3.5" />
+                            </div>
+                          )}
+                          <span className="font-medium text-foreground truncate">
+                            {tx.establishment}
+                          </span>
+                          <InstallmentBadge
+                            isInstallment={tx.isInstallment}
+                            current={tx.currentInstallment}
+                            total={tx.totalInstallments}
+                          />
+                        </div>
                       </TableCell>
                       <TableCell>{tx.primaryCategory}</TableCell>
                       <TableCell className="text-muted-foreground">
