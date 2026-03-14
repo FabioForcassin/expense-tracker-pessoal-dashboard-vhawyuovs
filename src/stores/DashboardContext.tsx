@@ -328,7 +328,7 @@ const INITIAL_EXPENSES: Expense[] = [
     classification: 'Pessoal',
     who: 'Fabio',
   },
-  // Future Predictability Mock Data (Future dates scaled for robust forecasting charts)
+  // Future Predictability Mock Data
   {
     id: '400',
     date: '2025-10-10',
@@ -444,7 +444,7 @@ interface DashboardContextType {
   toggleAccount: (account: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => void
   updateBudget: (key: string, value: number) => void
-  bulkImportData: (type: 'realizado' | 'orcamento', year: string) => void
+  bulkImportData: (type: 'realizado' | 'orcamento', year: string, data?: Expense[]) => void
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
@@ -499,11 +499,33 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setBudget((prev) => ({ ...prev, [key]: value }))
   }
 
-  const bulkImportData = (type: 'realizado' | 'orcamento', year: string) => {
+  const bulkImportData = (
+    type: 'realizado' | 'orcamento',
+    year: string,
+    parsedData?: Expense[],
+  ) => {
     if (type === 'realizado') {
+      if (parsedData && parsedData.length > 0) {
+        setExpenses((prev) => [...prev, ...parsedData])
+        return
+      }
+
+      // Fallback generator uses realistic names instead of sequential numbers
       const newExpenses: Expense[] = []
       const numExpenses = 120
       const methods = ['Itaú', 'Nubank', 'CC Itaú visa infinity', 'Santander', 'Dinheiro']
+      const establishments = [
+        'Supermercado Extra',
+        'Posto Ipiranga',
+        'Farmácia Drogasil',
+        'Restaurante do João',
+        'Padaria Pão Quente',
+        'Cinema Kinoplex',
+        'Amazon',
+        'Mercado Livre',
+        'Uber',
+        'Ifood',
+      ]
 
       for (let i = 0; i < numExpenses; i++) {
         const m = Math.floor(Math.random() * 12) + 1
@@ -524,15 +546,17 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           date,
           monthNum: m,
           competency: m.toString().padStart(2, '0'),
-          establishment: isReceita ? 'Cliente/Empresa' : `Estabelecimento ${i}`,
+          establishment: isReceita
+            ? 'Cliente/Empresa'
+            : establishments[Math.floor(Math.random() * establishments.length)],
           primaryCategory: cat.name,
           secondaryCategory: sub,
           type: isReceita ? 'Receita' : Math.random() > 0.5 ? 'Fixa' : 'Variável',
           paymentMethod: methods[Math.floor(Math.random() * methods.length)],
           value: parseFloat(val.toFixed(2)),
           comment: 'Importado',
-          classification: 'Pessoal',
-          who: 'Fabio',
+          classification: Math.random() > 0.8 ? 'Empresa' : 'Pessoal',
+          who: 'Usuário',
         })
       }
       setExpenses((prev) => [...prev, ...newExpenses])
@@ -599,14 +623,10 @@ export function useFilteredExpenses(applyMonthFilter = true) {
 
   let filtered = expenses
 
-  // By default, apply month filters. If applyMonthFilter is false, we might still want to apply the year filter depending on context.
-  // Actually, for yearly comparison, we don't apply month or year. We want full history.
-  // We'll let applyMonthFilter = false bypass both year and month filters.
   if (applyMonthFilter) {
     if (selectedMonths.length > 0) {
       filtered = filtered.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
     } else if (selectedYear) {
-      // If no month selected, just filter by year
       filtered = filtered.filter((e) => e.date.startsWith(selectedYear))
     }
   }
@@ -624,7 +644,6 @@ export function useFilteredExpenses(applyMonthFilter = true) {
     }
   }
 
-  // Two-layer Account Filter
   if (selectedAccountTypes.length > 0 || selectedAccounts.length > 0) {
     filtered = filtered.filter((e) => {
       const type = getAccountType(e.paymentMethod)

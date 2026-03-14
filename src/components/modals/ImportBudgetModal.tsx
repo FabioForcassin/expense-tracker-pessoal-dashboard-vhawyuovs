@@ -20,6 +20,7 @@ import { UploadCloud, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useDashboard } from '@/stores/DashboardContext'
+import { Expense } from '@/types'
 
 interface ImportDataModalProps {
   open: boolean
@@ -52,16 +53,61 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
     }
   }
 
-  const handleImport = () => {
+  const handleImport = async () => {
     if (files.length === 0) return
     setIsProcessing(true)
-    setTimeout(() => {
-      bulkImportData(importType, year)
-      toast.success(`Lote de dados (${importType} - ${year}) importado com sucesso!`)
-      setFiles([])
+
+    try {
+      const parsedExpenses: Expense[] = []
+
+      for (const file of files) {
+        if (file.name.match(/\.csv$/i)) {
+          const text = await file.text()
+          const lines = text.split('\n')
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim()
+            if (!line) continue
+            // Support both comma and semicolon separators
+            const separator = line.includes(';') ? ';' : ','
+            const regex = new RegExp(`${separator}(?=(?:(?:[^"]*"){2})*[^"]*$)`)
+            const cols = line.split(regex).map((s) => s.replace(/^"|"$/g, '').trim())
+
+            if (cols.length >= 5) {
+              parsedExpenses.push({
+                id: `imp_${file.name}_${Date.now()}_${i}`,
+                date: cols[0] || `${year}-01-01`,
+                monthNum: parseInt(cols[1]) || 1,
+                competency: cols[2] || 'Jan',
+                // Column E is index 4
+                establishment: cols[4] || 'Desconhecido',
+                primaryCategory: cols[5] || 'Outros',
+                secondaryCategory: cols[6] || 'Outros',
+                type: (cols[7] as any) || 'Variável',
+                paymentMethod: cols[8] || 'Dinheiro',
+                value: parseFloat(cols[9]) || 0,
+                // Column K is index 10
+                comment: cols[10] || '',
+                // Column L is index 11
+                classification: cols[11] || 'Pessoal',
+                // Column M is index 12
+                who: cols[12] || 'Usuário',
+              })
+            }
+          }
+        }
+      }
+
+      setTimeout(() => {
+        bulkImportData(importType, year, parsedExpenses.length > 0 ? parsedExpenses : undefined)
+        toast.success(`Lote de dados (${importType} - ${year}) importado com sucesso!`)
+        setFiles([])
+        setIsProcessing(false)
+        onOpenChange(false)
+      }, 1000)
+    } catch (e) {
+      toast.error('Erro ao processar arquivo')
       setIsProcessing(false)
-      onOpenChange(false)
-    }, 1500)
+    }
   }
 
   return (

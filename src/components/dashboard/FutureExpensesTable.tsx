@@ -53,13 +53,14 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
               <TableHead>Subcategoria</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Pgto/Conta</TableHead>
+              <TableHead>Comentário</TableHead>
               <TableHead className="text-right">Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {finalData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
                   Nenhuma transação futura encontrada no período.
                 </TableCell>
               </TableRow>
@@ -100,6 +101,12 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                       {tx.paymentMethod}
+                    </TableCell>
+                    <TableCell
+                      className="text-sm text-muted-foreground max-w-[150px] truncate"
+                      title={tx.comment}
+                    >
+                      {tx.comment || '-'}
                     </TableCell>
                     <TableCell
                       className={`text-right font-semibold text-sm whitespace-nowrap ${isIncome ? 'text-success' : 'text-foreground'}`}

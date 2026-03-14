@@ -1,23 +1,27 @@
 import { Expense } from '@/types'
-import { formatCurrency } from './format'
 
 export function exportToCSV(data: Expense[], filename: string) {
   const headers = [
     'Data',
+    'Mês',
     'Competência',
+    'Ignorado',
     'Estabelecimento',
-    'Categoria',
+    'Categoria Principal',
     'Subcategoria',
     'Tipo',
     'Forma de Pagto',
     'Valor',
+    'Comentário',
     'Classificação',
+    'Quem',
   ]
+
   const csvContent = [
     headers.join(','),
     ...data.map(
       (e) =>
-        `"${e.date}","${e.competency}","${e.establishment}","${e.primaryCategory}","${e.secondaryCategory}","${e.type}","${e.paymentMethod}",${e.value},"${e.classification}"`,
+        `"${e.date}","${e.monthNum}","${e.competency}","","${e.establishment}","${e.primaryCategory}","${e.secondaryCategory}","${e.type}","${e.paymentMethod}",${e.value},"${e.comment || ''}","${e.classification}","${e.who}"`,
     ),
   ].join('\n')
 

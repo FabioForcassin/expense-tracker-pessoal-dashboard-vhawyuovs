@@ -35,13 +35,19 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
               <TableHead>Subcategoria</TableHead>
               <TableHead>Tipo</TableHead>
               <TableHead>Pgto/Conta</TableHead>
+              <TableHead>Comentário</TableHead>
+              {full && <TableHead>Classificação</TableHead>}
+              {full && <TableHead>Quem</TableHead>}
               <TableHead className="text-right">Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {finalData.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="h-24 text-center text-muted-foreground">
+                <TableCell
+                  colSpan={full ? 10 : 8}
+                  className="h-24 text-center text-muted-foreground"
+                >
                   Nenhuma transação encontrada no período.
                 </TableCell>
               </TableRow>
@@ -83,6 +89,22 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                       {tx.paymentMethod}
                     </TableCell>
+                    <TableCell
+                      className="text-sm text-muted-foreground max-w-[150px] truncate"
+                      title={tx.comment}
+                    >
+                      {tx.comment || '-'}
+                    </TableCell>
+                    {full && (
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {tx.classification}
+                      </TableCell>
+                    )}
+                    {full && (
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
+                        {tx.who}
+                      </TableCell>
+                    )}
                     <TableCell
                       className={`text-right font-semibold text-sm whitespace-nowrap ${isIncome ? 'text-success' : 'text-foreground'}`}
                     >

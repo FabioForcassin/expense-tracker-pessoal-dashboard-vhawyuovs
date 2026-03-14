@@ -41,6 +41,9 @@ export function AddExpenseModal({
   const [type, setType] = useState<'Fixa' | 'Variável'>('Variável')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [payment, setPayment] = useState('')
+  const [comment, setComment] = useState('')
+  const [classification, setClassification] = useState('Pessoal')
+  const [who, setWho] = useState('Usuário')
 
   useEffect(() => {
     if (open) {
@@ -89,9 +92,9 @@ export function AddExpenseModal({
       date,
       monthNum,
       competency: compMap[monthNum - 1],
-      comment: '',
-      classification: 'Pessoal',
-      who: 'Usuário',
+      comment,
+      classification,
+      who,
     })
 
     toast.success(
@@ -107,6 +110,9 @@ export function AddExpenseModal({
     setSecondaryCat('')
     setType('Variável')
     setPayment('')
+    setComment('')
+    setClassification('Pessoal')
+    setWho('Usuário')
   }
 
   return (
@@ -261,6 +267,39 @@ export function AddExpenseModal({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label>Classificação</Label>
+              <Select value={classification} onValueChange={setClassification} required>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Pessoal">Pessoal</SelectItem>
+                  <SelectItem value="Empresa">Empresa</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Quem</Label>
+              <Input
+                value={who}
+                onChange={(e) => setWho(e.target.value)}
+                required
+                placeholder="Ex: Fabio"
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <Label>Comentário</Label>
+            <Input
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Opcional"
+            />
           </div>
 
           <Button
