@@ -13,6 +13,7 @@ import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 import { CreditCard } from 'lucide-react'
+import { formatCurrencyK } from '@/lib/format'
 
 export function PaymentTypeChart() {
   const filteredExpenses = useFilteredExpenses(true).filter((e) => e.primaryCategory !== 'Receitas')
@@ -35,9 +36,6 @@ export function PaymentTypeChart() {
   const chartConfig = {
     value: { label: 'Gasto' },
   }
-
-  const formatCurrency = (value: number) =>
-    `R$ ${value >= 1000 ? (value / 1000).toFixed(1).replace('.0', '') + 'k' : value}`
 
   return (
     <Card className="glass h-full flex flex-col">
@@ -73,13 +71,13 @@ export function PaymentTypeChart() {
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) =>
-                    `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
-                  }
+                  tickFormatter={(value) => formatCurrencyK(value)}
                   className="text-xs font-medium"
                 />
                 <Tooltip
-                  content={<ChartTooltipContent />}
+                  content={
+                    <ChartTooltipContent formatter={(value) => formatCurrencyK(value as number)} />
+                  }
                   cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
                 />
                 <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48}>
@@ -89,7 +87,7 @@ export function PaymentTypeChart() {
                   <LabelList
                     dataKey="value"
                     position="top"
-                    formatter={formatCurrency}
+                    formatter={(val: number) => (val > 0 ? formatCurrencyK(val) : '')}
                     className="fill-foreground font-semibold text-[10px]"
                     offset={4}
                   />

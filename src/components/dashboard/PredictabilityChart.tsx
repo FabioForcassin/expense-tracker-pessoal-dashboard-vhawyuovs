@@ -7,20 +7,22 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  LabelList,
 } from 'recharts'
 import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart'
 import { CalendarClock } from 'lucide-react'
+import { formatCurrencyK } from '@/lib/format'
 
 const COLORS = [
-  'hsl(221, 83%, 53%)', // primary blue
-  'hsl(180, 70%, 40%)', // teal
-  'hsl(262, 83%, 58%)', // purple
-  'hsl(199, 89%, 48%)', // light blue
-  'hsl(280, 65%, 60%)', // violet
-  'hsl(160, 84%, 39%)', // emerald
-  'hsl(230, 60%, 45%)', // dark blue
+  'hsl(221, 83%, 53%)',
+  'hsl(180, 70%, 40%)',
+  'hsl(262, 83%, 58%)',
+  'hsl(199, 89%, 48%)',
+  'hsl(280, 65%, 60%)',
+  'hsl(160, 84%, 39%)',
+  'hsl(230, 60%, 45%)',
 ]
 
 const sanitizeKey = (key: string) => key.replace(/[^a-zA-Z0-9_]/g, '_')
@@ -42,26 +44,22 @@ const monthNames: Record<string, string> = {
 
 export function PredictabilityChart() {
   const { selectedYear } = useDashboard()
-  // Bypass month filter to get all timeline data, but respects Category and Account filters
   const allExpenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
 
   const now = new Date()
   now.setHours(0, 0, 0, 0)
 
-  // 1. Filter only future transactions
   let futureExpenses = allExpenses.filter((e) => new Date(e.date) > now)
 
-  // 2. Project from selected year and into the future
   if (selectedYear) {
     futureExpenses = futureExpenses.filter((e) => e.date >= `${selectedYear}-01-01`)
   }
 
-  // 3. Group by Month and Payment Method
   const methods = new Set<string>()
   const monthGroups: Record<string, Record<string, number>> = {}
 
   futureExpenses.forEach((e) => {
-    const monthStr = e.date.substring(0, 7) // YYYY-MM
+    const monthStr = e.date.substring(0, 7)
     const method = e.paymentMethod || 'Outros'
     methods.add(method)
 
@@ -125,13 +123,13 @@ export function PredictabilityChart() {
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) =>
-                    `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
-                  }
+                  tickFormatter={(value) => formatCurrencyK(value)}
                   className="text-xs font-medium"
                 />
                 <Tooltip
-                  content={<ChartTooltipContent />}
+                  content={
+                    <ChartTooltipContent formatter={(value) => formatCurrencyK(value as number)} />
+                  }
                   cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
                 />
                 <Legend content={<ChartLegendContent />} />
@@ -144,7 +142,15 @@ export function PredictabilityChart() {
                       stackId="a"
                       fill={`var(--color-${key})`}
                       maxBarSize={40}
-                    />
+                    >
+                      <LabelList
+                        dataKey={key}
+                        position="top"
+                        formatter={(val: number) => (val > 0 ? formatCurrencyK(val) : '')}
+                        className="fill-foreground font-semibold text-[10px]"
+                        offset={4}
+                      />
+                    </Bar>
                   )
                 })}
               </BarChart>
