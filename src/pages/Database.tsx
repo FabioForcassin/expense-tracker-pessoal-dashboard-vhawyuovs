@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useDashboard } from '@/stores/DashboardContext'
 import { DatabaseTransactionsTable } from '@/components/dashboard/DatabaseTransactionsTable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -11,6 +11,8 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import {
   Table,
   TableBody,
@@ -22,7 +24,6 @@ import {
 import { Database as DatabaseIcon, Download, FileSpreadsheet } from 'lucide-react'
 import { ImportDataModal } from '@/components/modals/ImportBudgetModal'
 import { exportToCSV } from '@/lib/export'
-import { useEffect } from 'react'
 
 const monthsLabels = [
   'Jan',
@@ -75,6 +76,7 @@ export default function Database() {
   const { categories, budget, updateBudget, expenses } = useDashboard()
   const [localYear, setLocalYear] = useState('2024')
   const [isImportModalOpen, setImportModalOpen] = useState(false)
+  const [autoReplicate, setAutoReplicate] = useState(false)
 
   const availableYears = useMemo(() => {
     const years = new Set(expenses.map((e) => e.date.split('-')[0]).filter(Boolean))
@@ -122,25 +124,32 @@ export default function Database() {
         </TabsList>
 
         <TabsContent value="orcamento" className="flex flex-col gap-4 mt-0">
-          <div className="flex items-center justify-between bg-card p-4 rounded-lg border shadow-sm">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between bg-card p-4 rounded-lg border shadow-sm gap-4">
             <p className="text-sm text-muted-foreground">
-              Edite as metas mensais diretamente na tabela. As alterações são salvas
-              automaticamente.
+              Edite as metas mensais. As alterações são salvas automaticamente.
             </p>
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">Ano Fiscal:</span>
-              <Select value={localYear} onValueChange={setLocalYear}>
-                <SelectTrigger className="w-[120px] h-9 bg-background">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableYears.map((y) => (
-                    <SelectItem key={y} value={y}>
-                      {y}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div className="flex items-center flex-wrap gap-4">
+              <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-lg border">
+                <Switch id="auto-rep" checked={autoReplicate} onCheckedChange={setAutoReplicate} />
+                <Label htmlFor="auto-rep" className="cursor-pointer text-xs font-medium">
+                  Auto-replicar p/ meses seguintes
+                </Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-foreground">Ano Fiscal:</span>
+                <Select value={localYear} onValueChange={setLocalYear}>
+                  <SelectTrigger className="w-[100px] h-9 bg-background">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableYears.map((y) => (
+                      <SelectItem key={y} value={y}>
+                        {y}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
@@ -170,7 +179,7 @@ export default function Database() {
                 </TableHeader>
                 <TableBody>
                   {categories.map((cat) =>
-                    cat.subcategories.map((sub, i) => {
+                    cat.subcategories.map((sub) => {
                       let rowTotal = 0
                       return (
                         <TableRow
@@ -195,7 +204,17 @@ export default function Database() {
                               >
                                 <BudgetCell
                                   initialValue={val}
-                                  onSave={(newVal) => updateBudget(key, newVal)}
+                                  onSave={(newVal) => {
+                                    if (autoReplicate) {
+                                      for (let m = mIdx; m < 12; m++) {
+                                        const mKeyForLoop = `${localYear}-${String(m + 1).padStart(2, '0')}`
+                                        const loopKey = `${cat.name}|${sub}|${mKeyForLoop}`
+                                        updateBudget(loopKey, newVal)
+                                      }
+                                    } else {
+                                      updateBudget(key, newVal)
+                                    }
+                                  }}
                                 />
                               </TableCell>
                             )

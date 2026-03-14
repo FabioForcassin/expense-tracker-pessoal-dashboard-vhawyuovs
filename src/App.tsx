@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -15,7 +15,8 @@ import Insights from './pages/Insights'
 import AdminUsers from './pages/admin/Users'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
-import { ReactNode } from 'react'
+import UpdatePassword from './pages/UpdatePassword'
+import { ReactNode, useEffect } from 'react'
 
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth()
@@ -31,15 +32,28 @@ const AdminRoute = ({ children }: { children: ReactNode }) => {
   return <>{children}</>
 }
 
+const AuthFlowHandler = () => {
+  const navigate = useNavigate()
+  useEffect(() => {
+    const hash = window.location.hash
+    if (hash && (hash.includes('type=invite') || hash.includes('type=recovery'))) {
+      navigate('/update-password')
+    }
+  }, [navigate])
+  return null
+}
+
 const App = () => (
   <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
     <AuthProvider>
       <TooltipProvider>
         <DashboardProvider>
+          <AuthFlowHandler />
           <Toaster />
           <Sonner position="top-center" richColors />
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/update-password" element={<UpdatePassword />} />
             <Route
               element={
                 <ProtectedRoute>

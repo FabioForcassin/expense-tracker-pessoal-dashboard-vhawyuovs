@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { useDashboard } from '@/stores/DashboardContext'
@@ -45,6 +46,7 @@ export function AddExpenseModal({
   const [comment, setComment] = useState('')
   const [classification, setClassification] = useState('')
   const [who, setWho] = useState('')
+  const [replicateToEndOfYear, setReplicateToEndOfYear] = useState(false)
 
   useEffect(() => {
     if (open) {
@@ -67,15 +69,24 @@ export function AddExpenseModal({
     if (!value || !establishment || !primaryCat || !secondaryCat || !date || !payment) return
 
     const baseValue = parseFloat(value)
-    const instCount = tab === 'expense' ? installments : 1
-    const baseInstValue = instCount > 1 ? parseFloat((baseValue / instCount).toFixed(2)) : baseValue
-    const remainder =
-      instCount > 1 ? parseFloat((baseValue - baseInstValue * instCount).toFixed(2)) : 0
 
     const [yearStr, monthStr, dayStr] = date.split('-')
     const startYear = parseInt(yearStr)
     const startMonth = parseInt(monthStr) - 1
     const day = parseInt(dayStr)
+
+    const isFixedReplicate = tab === 'expense' && type === 'Fixa' && replicateToEndOfYear
+    const instCount = isFixedReplicate ? 12 - startMonth : tab === 'expense' ? installments : 1
+
+    // For replication we don't divide the value, for installments we do
+    const baseInstValue =
+      !isFixedReplicate && instCount > 1
+        ? parseFloat((baseValue / instCount).toFixed(2))
+        : baseValue
+    const remainder =
+      !isFixedReplicate && instCount > 1
+        ? parseFloat((baseValue - baseInstValue * instCount).toFixed(2))
+        : 0
 
     const compMap = [
       'Jan',
@@ -96,8 +107,13 @@ export function AddExpenseModal({
 
     for (let i = 0; i < instCount; i++) {
       let m = startMonth + i
-      const y = startYear + Math.floor(m / 12)
-      m = m % 12
+      let y = startYear
+
+      // If it's normal installment it could wrap to next year. Replication stays in same year by design.
+      if (m >= 12) {
+        y += Math.floor(m / 12)
+        m = m % 12
+      }
 
       const newMonthNum = m + 1
       const daysInMonth = new Date(y, newMonthNum, 0).getDate()
@@ -106,7 +122,7 @@ export function AddExpenseModal({
       const newDateStr = `${y}-${newMonthNum.toString().padStart(2, '0')}-${validDay.toString().padStart(2, '0')}`
 
       let finalComment = comment
-      if (instCount > 1) {
+      if (!isFixedReplicate && instCount > 1) {
         finalComment = comment
           ? `${comment} (Parcela ${i + 1}/${instCount})`
           : `Parcela ${i + 1}/${instCount}`
@@ -127,6 +143,9 @@ export function AddExpenseModal({
         comment: finalComment,
         classification,
         who,
+        isInstallment: !isFixedReplicate && instCount > 1,
+        currentInstallment: !isFixedReplicate && instCount > 1 ? i + 1 : undefined,
+        totalInstallments: !isFixedReplicate && instCount > 1 ? instCount : undefined,
       })
     }
 
@@ -152,6 +171,7 @@ export function AddExpenseModal({
     setComment('')
     setClassification('')
     setWho('')
+    setReplicateToEndOfYear(false)
   }
 
   return (
@@ -170,7 +190,9 @@ export function AddExpenseModal({
                 setPrimaryCat('')
                 setSecondaryCat('')
                 setInstallments(1)
+                setReplicateToEndOfYear(false)
               }}
+              type="button"
               className={cn(
                 'flex-1 text-sm font-medium py-1.5 rounded-md transition-all',
                 tab === 'expense'
@@ -186,7 +208,9 @@ export function AddExpenseModal({
                 setPrimaryCat('Receitas')
                 setSecondaryCat('')
                 setInstallments(1)
+                setReplicateToEndOfYear(false)
               }}
+              type="button"
               className={cn(
                 'flex-1 text-sm font-medium py-1.5 rounded-md transition-all',
                 tab === 'income'
@@ -217,7 +241,7 @@ export function AddExpenseModal({
               />
             </div>
             <div className="grid gap-2">
-              <Label>Data (Primeira Parcela)</Label>
+              <Label>Data (Primeira Ocorrência)</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
           </div>
@@ -282,7 +306,14 @@ export function AddExpenseModal({
             {tab === 'expense' && (
               <div className="grid gap-2">
                 <Label>Tipo de Gasto</Label>
-                <Select value={type} onValueChange={(v: any) => setType(v)} required>
+                <Select
+                  value={type}
+                  onValueChange={(v: any) => {
+                    setType(v)
+                    if (v !== 'Fixa') setReplicateToEndOfYear(false)
+                  }}
+                  required
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -293,7 +324,12 @@ export function AddExpenseModal({
                 </Select>
               </div>
             )}
-            <div className={cn('grid gap-2', tab === 'income' ? 'sm:col-span-3' : '')}>
+            <div
+              className={cn(
+                'grid gap-2',
+                tab === 'income' ? 'sm:col-span-3' : type === 'Fixa' ? 'sm:col-span-2' : '',
+              )}
+            >
               <Label>Forma de Pagamento</Label>
               <Select value={payment} onValueChange={setPayment} required>
                 <SelectTrigger>
@@ -308,7 +344,7 @@ export function AddExpenseModal({
                 </SelectContent>
               </Select>
             </div>
-            {tab === 'expense' && (
+            {tab === 'expense' && type !== 'Fixa' && (
               <div className="grid gap-2">
                 <Label>Qtd. Parcelas</Label>
                 <Select
@@ -330,6 +366,20 @@ export function AddExpenseModal({
               </div>
             )}
           </div>
+
+          {tab === 'expense' && type === 'Fixa' && (
+            <div className="grid gap-2 bg-muted/30 p-3 rounded-lg border border-border/50">
+              <div className="flex items-center justify-between">
+                <Label className="cursor-pointer flex flex-col gap-1 pr-4">
+                  <span className="font-semibold text-foreground">Replicar até o fim do ano</span>
+                  <span className="text-xs text-muted-foreground font-normal">
+                    Cria esta despesa com o mesmo valor para todos os meses seguintes até Dezembro.
+                  </span>
+                </Label>
+                <Switch checked={replicateToEndOfYear} onCheckedChange={setReplicateToEndOfYear} />
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
