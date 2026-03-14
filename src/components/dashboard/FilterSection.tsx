@@ -63,7 +63,7 @@ export function FilterSection() {
   }, [expenses])
 
   return (
-    <div className="flex flex-col gap-4 mb-6">
+    <div className="flex flex-col gap-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
         {/* Global Selectors: Year, Month, Accounts */}
         <div className="flex flex-wrap items-center gap-2 shrink-0 bg-background/50 p-1.5 rounded-lg border shadow-sm backdrop-blur-sm">

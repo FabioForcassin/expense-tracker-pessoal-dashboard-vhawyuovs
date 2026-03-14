@@ -26,7 +26,7 @@ export function TopBar() {
   }
 
   return (
-    <header className="sticky top-0 z-30 flex h-[72px] w-full items-center justify-between border-b border-border/40 bg-background/70 backdrop-blur-xl px-4 sm:px-6 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)]">
+    <header className="sticky top-0 z-30 flex h-[72px] w-full items-center justify-between border-b border-border/40 bg-background/95 supports-[backdrop-filter]:bg-background/80 backdrop-blur-xl px-4 sm:px-6 shadow-sm transition-all">
       <div className="flex items-center gap-4">
         {isMobile && (
           <Button variant="ghost" size="icon" onClick={toggleSidebar} className="shrink-0">

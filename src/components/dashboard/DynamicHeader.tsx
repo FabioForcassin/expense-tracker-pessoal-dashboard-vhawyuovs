@@ -31,7 +31,7 @@ export function DynamicHeader() {
   }
 
   return (
-    <div className="flex items-center gap-4 mb-2 animate-fade-in-up">
+    <div className="flex items-center gap-4 animate-fade-in-up">
       <div className="p-3 bg-primary/10 text-primary rounded-2xl border border-primary/20 shadow-sm">
         <CalendarDays className="w-6 h-6" />
       </div>
