@@ -23,7 +23,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { ArrowDownRight, ArrowUpRight, Database, Trash2 } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Database, Trash2, Layers } from 'lucide-react'
 import { toast } from 'sonner'
 import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 
@@ -194,8 +194,18 @@ export function DatabaseTransactionsTable() {
                       <TableCell
                         className={`text-right font-semibold whitespace-nowrap ${isIncome ? 'text-success' : 'text-foreground'}`}
                       >
-                        {isIncome ? '+' : '-'}
-                        {formatCurrency(tx.value)}
+                        <div className="flex items-center justify-end gap-1.5">
+                          {tx.isInstallment && (
+                            <Layers
+                              className="w-3.5 h-3.5 text-muted-foreground opacity-60"
+                              title="Despesa Parcelada"
+                            />
+                          )}
+                          <span>
+                            {isIncome ? '+' : '-'}
+                            {formatCurrency(tx.value)}
+                          </span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-right">
                         <Button

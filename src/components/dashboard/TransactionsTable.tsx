@@ -14,7 +14,14 @@ import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight, Activity } from 'lucide-react'
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  ChevronLeft,
+  ChevronRight,
+  Activity,
+  Layers,
+} from 'lucide-react'
 import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 
 export function TransactionsTable({ full = false }: { full?: boolean }) {
@@ -214,8 +221,18 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
                     <TableCell
                       className={`text-right font-semibold text-sm whitespace-nowrap ${isIncome ? 'text-success' : 'text-foreground'}`}
                     >
-                      {isIncome ? '+' : '-'}
-                      {formatCurrency(tx.value)}
+                      <div className="flex items-center justify-end gap-1.5">
+                        {tx.isInstallment && (
+                          <Layers
+                            className="w-3.5 h-3.5 text-muted-foreground opacity-60"
+                            title="Despesa Parcelada"
+                          />
+                        )}
+                        <span>
+                          {isIncome ? '+' : '-'}
+                          {formatCurrency(tx.value)}
+                        </span>
+                      </div>
                     </TableCell>
                   </TableRow>
                 )

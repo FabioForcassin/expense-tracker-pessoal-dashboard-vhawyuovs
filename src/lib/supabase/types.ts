@@ -105,6 +105,7 @@ export type Database = {
       goals: {
         Row: {
           amount: number
+          challenge_amount: number | null
           created_at: string
           id: string
           month: number
@@ -113,6 +114,7 @@ export type Database = {
         }
         Insert: {
           amount: number
+          challenge_amount?: number | null
           created_at?: string
           id?: string
           month: number
@@ -121,6 +123,7 @@ export type Database = {
         }
         Update: {
           amount?: number
+          challenge_amount?: number | null
           created_at?: string
           id?: string
           month?: number
@@ -363,6 +366,7 @@ export const Constants = {
 //   year: integer (not null)
 //   amount: numeric (not null)
 //   created_at: timestamp with time zone (not null, default: now())
+//   challenge_amount: numeric (nullable, default: 0)
 // Table: payment_methods
 //   id: uuid (not null, default: gen_random_uuid())
 //   user_id: uuid (not null)

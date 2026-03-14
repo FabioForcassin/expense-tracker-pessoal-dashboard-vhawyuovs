@@ -8,6 +8,8 @@ import {
   CalendarClock,
   Target,
   BellRing,
+  TrendingUp,
+  AlertTriangle,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -25,7 +27,7 @@ import { formatCurrency, formatDate } from '@/lib/format'
 
 export function AppSidebar() {
   const location = useLocation()
-  const { expenses } = useDashboard()
+  const { expenses, goals } = useDashboard()
 
   const mainItems = [
     { title: 'Visão Geral', url: '/', icon: LayoutDashboard },
@@ -33,6 +35,8 @@ export function AppSidebar() {
     { title: 'Metas', url: '/goals', icon: Target },
     { title: 'Gerenciamento', url: '/management', icon: Settings },
   ]
+
+  const analysisItems = [{ title: 'Tendências e Alertas', url: '/insights', icon: TrendingUp }]
 
   const advancedItems = [
     { title: 'Banco de Dados', url: '/database', icon: Database },
@@ -49,6 +53,23 @@ export function AppSidebar() {
   const upcoming = expenses
     .filter((e) => e.date >= todayStr && e.date <= nextWeekStr && e.primaryCategory !== 'Receitas')
     .sort((a, b) => a.date.localeCompare(b.date))
+
+  // Determine if user is overspending current month for the alert indicator
+  const currentMonth = today.getMonth() + 1
+  const currentYear = today.getFullYear()
+  const currentMonthGoal = goals.find((g) => g.month === currentMonth && g.year === currentYear)
+
+  let isOverspending = false
+  if (currentMonthGoal && currentMonthGoal.amount > 0) {
+    const currentMonthStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}`
+    const spent = expenses
+      .filter((e) => e.date.startsWith(currentMonthStr) && e.primaryCategory !== 'Receitas')
+      .reduce((sum, e) => sum + e.value, 0)
+
+    if (spent >= currentMonthGoal.amount * 0.9) {
+      isOverspending = true
+    }
+  }
 
   return (
     <Sidebar variant="inset" className="border-r border-border/50">
@@ -76,6 +97,36 @@ export function AppSidebar() {
                     <Link to={item.url}>
                       <item.icon className="w-4 h-4 opacity-70" />
                       <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup className="mt-4">
+          <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+            Análise
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="gap-1 mt-2">
+              {analysisItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === item.url}
+                    tooltip={item.title}
+                    className="font-medium w-full"
+                  >
+                    <Link to={item.url} className="flex items-center justify-between w-full">
+                      <div className="flex items-center gap-2">
+                        <item.icon className="w-4 h-4 opacity-70" />
+                        <span>{item.title}</span>
+                      </div>
+                      {isOverspending && (
+                        <AlertTriangle className="w-3.5 h-3.5 text-destructive shrink-0 animate-pulse" />
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

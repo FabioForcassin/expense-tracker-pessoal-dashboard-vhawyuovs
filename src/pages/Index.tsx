@@ -12,11 +12,14 @@ import { InsightsSection } from '@/components/dashboard/InsightsSection'
 import { PaymentTypeChart } from '@/components/dashboard/PaymentTypeChart'
 import { PredictabilityChart } from '@/components/dashboard/PredictabilityChart'
 import { FutureExpensesTable } from '@/components/dashboard/FutureExpensesTable'
+import { BudgetAlert } from '@/components/dashboard/BudgetAlert'
 
 export default function Index() {
   return (
     <div className="flex flex-col pb-8">
       <div className="max-w-[1400px] w-full mx-auto flex flex-col gap-4 lg:gap-6 animate-fade-in">
+        <BudgetAlert />
+
         <DynamicHeader />
         <KPICards />
 

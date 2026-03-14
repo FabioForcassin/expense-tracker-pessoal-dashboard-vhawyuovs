@@ -11,6 +11,7 @@ import Reports from './pages/Reports'
 import Management from './pages/Management'
 import Predictability from './pages/Predictability'
 import Goals from './pages/Goals'
+import Insights from './pages/Insights'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
 import { ReactNode } from 'react'
@@ -41,6 +42,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/predictability" element={<Predictability />} />
               <Route path="/goals" element={<Goals />} />
+              <Route path="/insights" element={<Insights />} />
               <Route path="/management" element={<Management />} />
               <Route path="/database" element={<Database />} />
               <Route path="/reports" element={<Reports />} />

@@ -1,7 +1,7 @@
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { CalendarClock } from 'lucide-react'
+import { CalendarClock, Layers } from 'lucide-react'
 import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 import {
   Table,
@@ -103,7 +103,15 @@ export default function Predictability() {
                             {tx.primaryCategory}
                           </TableCell>
                           <TableCell className="text-right font-semibold text-sm">
-                            {formatCurrency(tx.value)}
+                            <div className="flex items-center justify-end gap-1.5">
+                              {tx.isInstallment && (
+                                <Layers
+                                  className="w-3.5 h-3.5 text-muted-foreground opacity-60"
+                                  title="Despesa Parcelada"
+                                />
+                              )}
+                              <span>{formatCurrency(tx.value)}</span>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}

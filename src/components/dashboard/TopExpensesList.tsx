@@ -1,7 +1,7 @@
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/format'
-import { Trophy } from 'lucide-react'
+import { Trophy, Layers } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 export function TopExpensesList() {
@@ -45,7 +45,13 @@ export function TopExpensesList() {
                     </div>
                   </div>
                   <div className="text-right shrink-0 ml-2">
-                    <p className="text-sm font-bold text-foreground">
+                    <p className="text-sm font-bold text-foreground flex items-center justify-end gap-1.5">
+                      {expense.isInstallment && (
+                        <Layers
+                          className="w-3.5 h-3.5 text-muted-foreground opacity-60"
+                          title="Despesa Parcelada"
+                        />
+                      )}
                       {formatCurrency(expense.value)}
                     </p>
                   </div>
