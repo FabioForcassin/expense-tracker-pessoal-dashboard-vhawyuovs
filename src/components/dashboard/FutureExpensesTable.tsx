@@ -17,9 +17,10 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
   const allExpenses = useFilteredExpenses(false)
 
   const d = new Date()
-  const todayStr = `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
+  const lastDayOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0)
+  const lastDayStr = `${lastDayOfMonth.getFullYear()}-${(lastDayOfMonth.getMonth() + 1).toString().padStart(2, '0')}-${lastDayOfMonth.getDate().toString().padStart(2, '0')}`
 
-  let futureExpenses = allExpenses.filter((e) => e.date >= todayStr)
+  let futureExpenses = allExpenses.filter((e) => e.date > lastDayStr)
 
   if (selectedYear) {
     futureExpenses = futureExpenses.filter((e) => e.date >= `${selectedYear}-01-01`)
@@ -64,7 +65,7 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
             {finalData.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={8} className="h-24 text-center text-muted-foreground">
-                  Nenhuma transação futura encontrada.
+                  Nenhuma transação futura encontrada para os próximos meses.
                 </TableCell>
               </TableRow>
             ) : (

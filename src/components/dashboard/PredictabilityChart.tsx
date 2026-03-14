@@ -47,9 +47,10 @@ export function PredictabilityChart() {
   const allExpenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
 
   const now = new Date()
-  now.setHours(0, 0, 0, 0)
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  const lastDayStr = `${lastDayOfMonth.getFullYear()}-${(lastDayOfMonth.getMonth() + 1).toString().padStart(2, '0')}-${lastDayOfMonth.getDate().toString().padStart(2, '0')}`
 
-  let futureExpenses = allExpenses.filter((e) => new Date(e.date) > now)
+  let futureExpenses = allExpenses.filter((e) => e.date > lastDayStr)
 
   if (selectedYear) {
     futureExpenses = futureExpenses.filter((e) => e.date >= `${selectedYear}-01-01`)
@@ -100,7 +101,9 @@ export function PredictabilityChart() {
             <p className="text-muted-foreground text-sm text-center px-4">
               Nenhuma despesa futura registrada.
               <br />
-              <span className="text-xs">Cadastre compromissos com data superior a hoje.</span>
+              <span className="text-xs">
+                Cadastre compromissos com data superior ao fim do mês atual.
+              </span>
             </p>
           </div>
         ) : (

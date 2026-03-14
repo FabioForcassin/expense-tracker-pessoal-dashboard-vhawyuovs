@@ -8,6 +8,7 @@ import { TrendChart } from '@/components/dashboard/TrendChart'
 import { YearlyHistoryChart } from '@/components/dashboard/YearlyHistoryChart'
 import { TopExpensesList } from '@/components/dashboard/TopExpensesList'
 import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
+import { FilteredTransactionsTable } from '@/components/dashboard/FilteredTransactionsTable'
 import { InsightsSection } from '@/components/dashboard/InsightsSection'
 import { PaymentTypeChart } from '@/components/dashboard/PaymentTypeChart'
 import { PredictabilityChart } from '@/components/dashboard/PredictabilityChart'
@@ -61,6 +62,7 @@ export default function Index() {
 
         <FutureExpensesTable />
         <TransactionsTable />
+        <FilteredTransactionsTable />
       </div>
     </div>
   )

@@ -10,9 +10,11 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Calendar } from '@/components/ui/calendar'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, ChevronLeft, ChevronRight, Activity } from 'lucide-react'
 
 export function TransactionsTable({ full = false }: { full?: boolean }) {
   const filteredTransactions = useFilteredExpenses(true)
@@ -25,6 +27,8 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
     const d = new Date()
     return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`
   })
+
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   const handlePrevDay = () => {
     const [y, m, d] = currentDateStr.split('-').map(Number)
@@ -44,6 +48,19 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
     )
   }
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (date) {
+      const y = date.getFullYear()
+      const m = (date.getMonth() + 1).toString().padStart(2, '0')
+      const dStr = date.getDate().toString().padStart(2, '0')
+      setCurrentDateStr(`${y}-${m}-${dStr}`)
+      setIsCalendarOpen(false)
+    }
+  }
+
+  const [y, m, d] = currentDateStr.split('-').map(Number)
+  const currentDateObj = new Date(y, m - 1, d)
+
   const dailyTransactions = sortedTransactions.filter((t) => t.date === currentDateStr)
 
   const netSubtotal = dailyTransactions.reduce((acc, t) => {
@@ -55,7 +72,10 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
   return (
     <Card className="glass mb-6">
       <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <CardTitle className="text-base font-semibold">Transações Recentes</CardTitle>
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <Activity className="w-4 h-4 text-primary" />
+          Transações Recentes
+        </CardTitle>
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center bg-muted/50 rounded-lg p-1 border border-border/50">
             <Button
@@ -66,9 +86,24 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
             >
               <ChevronLeft className="w-4 h-4" />
             </Button>
-            <span className="text-sm font-semibold w-28 text-center text-foreground">
-              {formatDate(currentDateStr)}
-            </span>
+            <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-8 hover:bg-background px-3 font-semibold text-foreground w-28"
+                >
+                  {formatDate(currentDateStr)}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="center">
+                <Calendar
+                  mode="single"
+                  selected={currentDateObj}
+                  onSelect={handleDateSelect}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
             <Button
               variant="ghost"
               size="icon"
