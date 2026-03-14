@@ -18,7 +18,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { useDashboard } from '@/stores/DashboardContext'
-import { PAYMENT_METHODS } from '@/types'
+import { PAYMENT_METHODS, Expense } from '@/types'
 import { cn } from '@/lib/utils'
 
 interface AddExpenseModalProps {
@@ -32,7 +32,7 @@ export function AddExpenseModal({
   onOpenChange,
   defaultTab = 'expense',
 }: AddExpenseModalProps) {
-  const { categories, addExpense } = useDashboard()
+  const { categories, addExpenses } = useDashboard()
   const [tab, setTab] = useState<'expense' | 'income'>(defaultTab)
   const [value, setValue] = useState('')
   const [establishment, setEstablishment] = useState('')
@@ -62,7 +62,7 @@ export function AddExpenseModal({
   )
   const selectedCategoryObj = categories.find((c) => c.name === primaryCat)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!value || !establishment || !primaryCat || !secondaryCat || !date || !payment) return
 
@@ -92,6 +92,8 @@ export function AddExpenseModal({
       'Dez',
     ]
 
+    const expensesToAdd: Omit<Expense, 'id'>[] = []
+
     for (let i = 0; i < instCount; i++) {
       let m = startMonth + i
       const y = startYear + Math.floor(m / 12)
@@ -112,7 +114,7 @@ export function AddExpenseModal({
 
       const val = i === 0 ? parseFloat((baseInstValue + remainder).toFixed(2)) : baseInstValue
 
-      addExpense({
+      expensesToAdd.push({
         value: val,
         establishment,
         primaryCategory: primaryCat,
@@ -128,10 +130,15 @@ export function AddExpenseModal({
       })
     }
 
-    toast.success(
-      tab === 'income' ? 'Receita registrada com sucesso!' : 'Despesa registrada com sucesso!',
-    )
-    onOpenChange(false)
+    try {
+      await addExpenses(expensesToAdd)
+      toast.success(
+        tab === 'income' ? 'Receita registrada com sucesso!' : 'Despesa registrada com sucesso!',
+      )
+      onOpenChange(false)
+    } catch (err) {
+      toast.error('Erro ao registrar transação.')
+    }
   }
 
   const resetForm = () => {

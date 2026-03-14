@@ -1,6 +1,6 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { useDashboard } from '@/stores/DashboardContext'
-import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
+import { DatabaseTransactionsTable } from '@/components/dashboard/DatabaseTransactionsTable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select,
@@ -22,6 +22,7 @@ import {
 import { Database as DatabaseIcon, Download, FileSpreadsheet } from 'lucide-react'
 import { ImportDataModal } from '@/components/modals/ImportBudgetModal'
 import { exportToCSV } from '@/lib/export'
+import { useEffect } from 'react'
 
 const monthsLabels = [
   'Jan',
@@ -213,7 +214,7 @@ export default function Database() {
         </TabsContent>
 
         <TabsContent value="realizado" className="mt-0">
-          <TransactionsTable full />
+          <DatabaseTransactionsTable />
         </TabsContent>
       </Tabs>
 

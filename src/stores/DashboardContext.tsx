@@ -257,6 +257,8 @@ interface DashboardContextType {
   selectedAccounts: string[]
   toggleAccount: (account: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => Promise<void>
+  addExpenses: (e: Omit<Expense, 'id'>[]) => Promise<void>
+  deleteExpenses: (ids: string[]) => Promise<void>
   updateBudget: (key: string, value: number) => void
   bulkImportData: (type: 'realizado' | 'orcamento', year: string, data?: Expense[]) => Promise<void>
 }
@@ -343,8 +345,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }
 
   const addExpense = async (e: Omit<Expense, 'id'>) => {
+    await addExpenses([e])
+  }
+
+  const addExpenses = async (expensesToAdd: Omit<Expense, 'id'>[]) => {
     if (!user) return
-    const payload = {
+    const payloads = expensesToAdd.map((e) => ({
       user_id: user.id,
       description: e.establishment,
       amount: e.value,
@@ -358,32 +364,44 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       who: e.who,
       month_num: e.monthNum,
       competency: e.competency,
-    }
+    }))
     const { data, error } = await supabase
       .from('expenses' as any)
-      .insert([payload])
+      .insert(payloads)
       .select()
-      .single()
     if (error || !data) {
-      console.error('Error inserting expense:', error)
+      console.error('Error inserting expenses:', error)
       return
     }
-    const newExpense: Expense = {
-      id: data.id,
-      date: data.date.split('T')[0],
-      monthNum: data.month_num,
-      competency: data.competency,
-      establishment: data.description,
-      primaryCategory: data.category,
-      secondaryCategory: data.secondary_category,
-      type: data.type,
-      paymentMethod: data.payment_method,
-      value: Number(data.amount),
-      comment: data.comment,
-      classification: data.classification,
-      who: data.who,
+    const newExpenses: Expense[] = data.map((d: any) => ({
+      id: d.id,
+      date: d.date.split('T')[0],
+      monthNum: d.month_num,
+      competency: d.competency,
+      establishment: d.description,
+      primaryCategory: d.category,
+      secondaryCategory: d.secondary_category,
+      type: d.type,
+      paymentMethod: d.payment_method,
+      value: Number(d.amount),
+      comment: d.comment,
+      classification: d.classification,
+      who: d.who,
+    }))
+    setExpenses((prev) => [...prev, ...newExpenses])
+  }
+
+  const deleteExpenses = async (ids: string[]) => {
+    if (!user || ids.length === 0) return
+    const { error } = await supabase
+      .from('expenses' as any)
+      .delete()
+      .in('id', ids)
+    if (error) {
+      console.error('Error deleting expenses:', error)
+      throw error
     }
-    setExpenses((prev) => [...prev, newExpense])
+    setExpenses((prev) => prev.filter((e) => !ids.includes(e.id)))
   }
 
   const updateBudget = (key: string, value: number) => {
@@ -450,44 +468,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         itemsToInsert = generated as Expense[]
       }
 
-      const payloads = itemsToInsert.map((e) => ({
-        user_id: user.id,
-        description: e.establishment,
-        amount: e.value,
-        category: e.primaryCategory,
-        date: new Date(e.date + 'T00:00:00Z').toISOString(),
-        secondary_category: e.secondaryCategory,
-        type: e.type,
-        payment_method: e.paymentMethod,
-        comment: e.comment,
-        classification: e.classification,
-        who: e.who,
-        month_num: e.monthNum,
-        competency: e.competency,
-      }))
-
-      const { data, error } = await supabase
-        .from('expenses' as any)
-        .insert(payloads)
-        .select()
-      if (!error && data) {
-        const mapped = data.map((d: any) => ({
-          id: d.id,
-          date: d.date.split('T')[0],
-          monthNum: d.month_num,
-          competency: d.competency,
-          establishment: d.description,
-          primaryCategory: d.category,
-          secondaryCategory: d.secondary_category,
-          type: d.type,
-          paymentMethod: d.payment_method,
-          value: Number(d.amount),
-          comment: d.comment,
-          classification: d.classification,
-          who: d.who,
-        }))
-        setExpenses((prev) => [...prev, ...mapped])
-      }
+      await addExpenses(itemsToInsert)
     } else {
       const newBudget = { ...budget }
       Object.keys(newBudget).forEach((k) => {
@@ -519,6 +500,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         selectedAccounts,
         toggleAccount,
         addExpense,
+        addExpenses,
+        deleteExpenses,
         updateBudget,
         bulkImportData,
       }}
