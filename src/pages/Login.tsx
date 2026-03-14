@@ -9,8 +9,8 @@ import { toast } from 'sonner'
 import { Landmark } from 'lucide-react'
 
 export default function Login() {
-  const [email, setEmail] = useState('admin@example.com')
-  const [password, setPassword] = useState('Admin123!')
+  const [email, setEmail] = useState('fabio.forcassin@benera.com.br')
+  const [password, setPassword] = useState('@#Benera123456@#')
   const [loading, setLoading] = useState(false)
   const { signIn } = useAuth()
   const navigate = useNavigate()
