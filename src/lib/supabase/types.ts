@@ -156,6 +156,27 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          role: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id: string
+          role?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          role?: string
+        }
+        Relationships: []
+      }
       subcategories: {
         Row: {
           category_id: string
@@ -190,7 +211,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
@@ -373,6 +394,11 @@ export const Constants = {
 //   name: text (not null)
 //   type: text (not null)
 //   created_at: timestamp with time zone (not null, default: now())
+// Table: profiles
+//   id: uuid (not null)
+//   email: text (not null)
+//   role: text (not null, default: 'user'::text)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: subcategories
 //   id: uuid (not null, default: gen_random_uuid())
 //   category_id: uuid (not null)
@@ -393,34 +419,69 @@ export const Constants = {
 // Table: payment_methods
 //   PRIMARY KEY payment_methods_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY payment_methods_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+// Table: profiles
+//   FOREIGN KEY profiles_id_fkey: FOREIGN KEY (id) REFERENCES auth.users(id) ON DELETE CASCADE
+//   PRIMARY KEY profiles_pkey: PRIMARY KEY (id)
 // Table: subcategories
 //   FOREIGN KEY subcategories_category_id_fkey: FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 //   PRIMARY KEY subcategories_pkey: PRIMARY KEY (id)
 
 // --- ROW LEVEL SECURITY POLICIES ---
 // Table: categories
-//   Policy "Users can manage their own categories" (ALL, PERMISSIVE) roles={public}
-//     USING: (auth.uid() = user_id)
+//   Policy "Categories access policy" (ALL, PERMISSIVE) roles={public}
+//     USING: ((auth.uid() = user_id) OR is_admin())
+//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
 // Table: expenses
-//   Policy "Users can delete their own expenses" (DELETE, PERMISSIVE) roles={public}
-//     USING: (auth.uid() = user_id)
-//   Policy "Users can insert their own expenses" (INSERT, PERMISSIVE) roles={public}
-//     WITH CHECK: (auth.uid() = user_id)
-//   Policy "Users can update their own expenses" (UPDATE, PERMISSIVE) roles={public}
-//     USING: (auth.uid() = user_id)
-//   Policy "Users can view their own expenses" (SELECT, PERMISSIVE) roles={public}
-//     USING: (auth.uid() = user_id)
+//   Policy "Expenses access policy" (ALL, PERMISSIVE) roles={public}
+//     USING: ((auth.uid() = user_id) OR is_admin())
+//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
 // Table: goals
-//   Policy "Users can manage their own goals" (ALL, PERMISSIVE) roles={public}
-//     USING: (auth.uid() = user_id)
+//   Policy "Goals access policy" (ALL, PERMISSIVE) roles={public}
+//     USING: ((auth.uid() = user_id) OR is_admin())
+//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
 // Table: payment_methods
-//   Policy "Users can manage their own payment methods" (ALL, PERMISSIVE) roles={public}
-//     USING: (auth.uid() = user_id)
+//   Policy "Payment methods access policy" (ALL, PERMISSIVE) roles={public}
+//     USING: ((auth.uid() = user_id) OR is_admin())
+//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
+// Table: profiles
+//   Policy "Enable read for admins" (SELECT, PERMISSIVE) roles={public}
+//     USING: is_admin()
+//   Policy "Enable read for users based on user_id" (SELECT, PERMISSIVE) roles={public}
+//     USING: (auth.uid() = id)
+//   Policy "Enable update for admins" (UPDATE, PERMISSIVE) roles={public}
+//     USING: is_admin()
+//     WITH CHECK: is_admin()
 // Table: subcategories
-//   Policy "Users can manage their own subcategories" (ALL, PERMISSIVE) roles={public}
-//     USING: (category_id IN ( SELECT categories.id    FROM categories   WHERE (categories.user_id = auth.uid())))
+//   Policy "Subcategories access policy" (ALL, PERMISSIVE) roles={public}
+//     USING: (category_id IN ( SELECT categories.id    FROM categories   WHERE ((categories.user_id = auth.uid()) OR is_admin())))
+//     WITH CHECK: (category_id IN ( SELECT categories.id    FROM categories   WHERE ((categories.user_id = auth.uid()) OR is_admin())))
 
 // --- DATABASE FUNCTIONS ---
+// FUNCTION handle_new_user()
+//   CREATE OR REPLACE FUNCTION public.handle_new_user()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//   BEGIN
+//     INSERT INTO public.profiles (id, email)
+//     VALUES (NEW.id, NEW.email);
+//     RETURN NEW;
+//   END;
+//   $function$
+//
+// FUNCTION is_admin()
+//   CREATE OR REPLACE FUNCTION public.is_admin()
+//    RETURNS boolean
+//    LANGUAGE sql
+//    SECURITY DEFINER
+//    SET search_path TO 'public'
+//   AS $function$
+//     SELECT EXISTS (
+//       SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'admin'
+//     );
+//   $function$
+//
 // FUNCTION rls_auto_enable()
 //   CREATE OR REPLACE FUNCTION public.rls_auto_enable()
 //    RETURNS event_trigger

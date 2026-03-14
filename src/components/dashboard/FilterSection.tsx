@@ -11,8 +11,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
-import { Label } from '@/components/ui/label'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Filter, Layers, CalendarDays, CreditCard, ChevronDown, FilterX } from 'lucide-react'
 
@@ -38,12 +36,6 @@ const DAYS = Array.from({ length: 31 }, (_, i) => ({
 
 export function FilterSection() {
   const {
-    isAdmin,
-    isGlobalView,
-    setIsGlobalView,
-    adminSelectedUserId,
-    setAdminSelectedUserId,
-    profiles,
     categories,
     selectedPrimaryCat,
     setSelectedPrimaryCat,
@@ -81,42 +73,6 @@ export function FilterSection() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        {isAdmin && (
-          <div className="flex flex-wrap items-center gap-2 shrink-0 bg-primary/5 p-1.5 rounded-lg border border-primary/20 shadow-sm backdrop-blur-sm mr-2">
-            <div className="flex items-center gap-2 px-2">
-              <Switch
-                id="global-view"
-                checked={isGlobalView}
-                onCheckedChange={setIsGlobalView}
-                className="data-[state=checked]:bg-primary"
-              />
-              <Label
-                htmlFor="global-view"
-                className="text-sm font-semibold text-primary cursor-pointer whitespace-nowrap"
-              >
-                Visão Global
-              </Label>
-            </div>
-            {isGlobalView && (
-              <div className="border-l border-primary/20 pl-2 ml-1">
-                <Select value={adminSelectedUserId} onValueChange={setAdminSelectedUserId}>
-                  <SelectTrigger className="h-8 w-[150px] bg-background border-primary/20">
-                    <SelectValue placeholder="Usuário" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os Usuários</SelectItem>
-                    {profiles.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Global Selectors: Year, Month, Day, Accounts */}
         <div className="flex flex-wrap items-center gap-2 shrink-0 bg-background/50 p-1.5 rounded-lg border shadow-sm backdrop-blur-sm">
           {/* Year Standalone Dropdown */}

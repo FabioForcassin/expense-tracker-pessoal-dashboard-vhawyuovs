@@ -19,16 +19,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { createClient } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Users as UsersIcon, UserPlus, Shield, User } from 'lucide-react'
+import { Users as UsersIcon, UserPlus, Shield, User, Mail } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { inviteUser } from '@/services/admin'
 
 export default function AdminUsers() {
   const { profiles, fetchProfiles } = useDashboard()
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [role, setRole] = useState('user')
   const [loading, setLoading] = useState(false)
 
@@ -36,34 +34,17 @@ export default function AdminUsers() {
     e.preventDefault()
     setLoading(true)
 
-    // Using a secondary client to prevent logging out the current admin user
-    const secondaryClient = createClient(
-      import.meta.env.VITE_SUPABASE_URL as string,
-      import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
-      { auth: { autoRefreshToken: false, persistSession: false } },
-    )
-
-    const { data, error } = await secondaryClient.auth.signUp({ email, password })
+    const { error } = await inviteUser(email, role)
 
     if (error) {
-      toast.error(`Erro ao criar usuário: ${error.message}`)
-    } else if (data.user) {
-      // The DB trigger creates the profile, we just need to update the role
-      const { error: updateError } = await supabase
-        .from('profiles' as any)
-        .update({ role })
-        .eq('id', data.user.id)
-
-      if (updateError) {
-        toast.error('Usuário criado, mas erro ao definir permissões.')
-      } else {
-        toast.success('Usuário criado com sucesso!')
-        setEmail('')
-        setPassword('')
-        setRole('user')
-        fetchProfiles()
-      }
+      toast.error(`Erro ao convidar usuário: ${error.message || 'Falha na comunicação.'}`)
+    } else {
+      toast.success('Convite enviado com sucesso por e-mail!')
+      setEmail('')
+      setRole('user')
+      fetchProfiles()
     }
+
     setLoading(false)
   }
 
@@ -77,7 +58,7 @@ export default function AdminUsers() {
           Gestão de Usuários
         </h2>
         <p className="text-muted-foreground text-sm mt-2">
-          Gerencie permissões e acessos à plataforma financeira.
+          Gerencie permissões e convide novos membros para a plataforma financeira.
         </p>
       </div>
 
@@ -87,14 +68,14 @@ export default function AdminUsers() {
             <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-primary" />
-                Criar Novo Usuário
+                Convidar Novo Usuário
               </CardTitle>
-              <CardDescription>Adicione um novo membro à plataforma.</CardDescription>
+              <CardDescription>Envie um convite de acesso para a plataforma.</CardDescription>
             </CardHeader>
             <CardContent className="p-6">
               <form onSubmit={handleAddUser} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">E-mail</Label>
+                  <Label htmlFor="email">E-mail do Usuário</Label>
                   <Input
                     id="email"
                     type="email"
@@ -102,17 +83,6 @@ export default function AdminUsers() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     placeholder="usuario@exemplo.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="password">Senha Temporária</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="Mínimo 6 caracteres"
                   />
                 </div>
                 <div className="space-y-2">
@@ -127,8 +97,17 @@ export default function AdminUsers() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="bg-muted/50 p-3 rounded-md flex items-start gap-2 border border-border/50">
+                  <Mail className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                  <p className="text-xs text-muted-foreground">
+                    O usuário receberá um e-mail com um link seguro para definir sua senha inicial e
+                    acessar a plataforma.
+                  </p>
+                </div>
+
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Criando...' : 'Cadastrar Usuário'}
+                  {loading ? 'Enviando...' : 'Enviar Convite'}
                 </Button>
               </form>
             </CardContent>

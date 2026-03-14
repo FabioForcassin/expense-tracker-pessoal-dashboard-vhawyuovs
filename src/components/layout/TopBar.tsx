@@ -2,23 +2,33 @@ import { useState } from 'react'
 import { Menu, Plus, Upload, TrendingUp } from 'lucide-react'
 import { useSidebar } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { AddExpenseModal } from '../modals/AddExpenseModal'
 import { ImportDataModal } from '../modals/ImportBudgetModal'
 import { useDashboard } from '@/stores/DashboardContext'
+import { useAuth } from '@/hooks/use-auth'
 
 export function TopBar() {
   const { toggleSidebar, isMobile } = useSidebar()
-  const { currentMonth } = useDashboard()
+  const { user } = useAuth()
+  const {
+    isAdmin,
+    adminSelectedUserId,
+    setAdminSelectedUserId,
+    setIsGlobalView,
+    isGlobalView,
+    profiles,
+  } = useDashboard()
+
   const [expenseModalOpen, setExpenseModalOpen] = useState(false)
   const [modalDefaultTab, setModalDefaultTab] = useState<'expense' | 'income'>('expense')
   const [importModalOpen, setImportModalOpen] = useState(false)
-
-  const displayMonth = new Date(currentMonth + '-02').toLocaleString('pt-BR', {
-    month: 'long',
-    year: 'numeric',
-  })
-
-  const formattedMonth = displayMonth.charAt(0).toUpperCase() + displayMonth.slice(1)
 
   const openAddModal = (tab: 'expense' | 'income') => {
     setModalDefaultTab(tab)
@@ -33,13 +43,31 @@ export function TopBar() {
             <Menu className="w-5 h-5" />
           </Button>
         )}
-        <div>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <h1 className="text-xl font-bold tracking-tight text-foreground leading-tight">
             Dashboard Executivo
           </h1>
-          <p className="text-sm font-medium text-primary hidden sm:block">
-            Visão Geral de {formattedMonth}
-          </p>
+          {isAdmin && (
+            <Select
+              value={isGlobalView ? adminSelectedUserId : user?.id || 'all'}
+              onValueChange={(val) => {
+                setIsGlobalView(true)
+                setAdminSelectedUserId(val)
+              }}
+            >
+              <SelectTrigger className="h-8 w-full sm:w-[220px] bg-muted/50 border-border/60 ml-0 sm:ml-2">
+                <SelectValue placeholder="Selecione o usuário" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os Usuários</SelectItem>
+                {profiles.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {p.email}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       </div>
       <div className="flex items-center gap-2 sm:gap-3">
