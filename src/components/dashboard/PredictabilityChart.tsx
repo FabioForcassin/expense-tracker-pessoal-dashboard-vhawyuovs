@@ -9,7 +9,7 @@ import {
   Legend,
   LabelList,
 } from 'recharts'
-import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
+import { useDashboard } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart'
 import { CalendarClock } from 'lucide-react'
@@ -43,18 +43,16 @@ const monthNames: Record<string, string> = {
 }
 
 export function PredictabilityChart() {
-  const { selectedYear } = useDashboard()
-  const allExpenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
+  const { expenses } = useDashboard()
 
   const now = new Date()
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
   const lastDayStr = `${lastDayOfMonth.getFullYear()}-${(lastDayOfMonth.getMonth() + 1).toString().padStart(2, '0')}-${lastDayOfMonth.getDate().toString().padStart(2, '0')}`
 
-  let futureExpenses = allExpenses.filter((e) => e.date > lastDayStr)
-
-  if (selectedYear) {
-    futureExpenses = futureExpenses.filter((e) => e.date >= `${selectedYear}-01-01`)
-  }
+  // Ensure chart matches raw future entries without global filters clipping future years
+  const futureExpenses = expenses.filter(
+    (e) => e.primaryCategory !== 'Receitas' && e.date > lastDayStr,
+  )
 
   const methods = new Set<string>()
   const monthGroups: Record<string, Record<string, number>> = {}
