@@ -1,5 +1,5 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from '../_shared/cors.ts'
 
 Deno.serve(async (req: Request) => {
@@ -8,41 +8,43 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    )
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing environment variables.')
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
     const { email, role } = await req.json()
 
     if (!email) {
-      throw new Error('E-mail é obrigatório.')
+      throw new Error('Email is required.')
     }
 
-    const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email)
+    const { data, error } = await supabase.auth.admin.inviteUserByEmail(email)
 
     if (error) {
       throw error
     }
 
-    // Attempt to update the user role if it's admin, as the trigger defaults to 'user'
-    if (data.user && role === 'admin') {
-      const { error: updateError } = await supabaseAdmin
+    if (data.user?.id && role) {
+      const { error: profileError } = await supabase
         .from('profiles')
-        .update({ role: 'admin' })
+        .update({ role })
         .eq('id', data.user.id)
 
-      if (updateError) {
-        console.error('Failed to update role in profile:', updateError)
+      if (profileError) {
+        console.error('Error updating profile role:', profileError)
       }
     }
 
-    return new Response(JSON.stringify({ user: data.user }), {
+    return new Response(JSON.stringify({ data }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
     })
-  } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     })
