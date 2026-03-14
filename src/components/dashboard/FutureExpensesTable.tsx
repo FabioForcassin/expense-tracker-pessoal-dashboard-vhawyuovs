@@ -88,14 +88,14 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
                               <ArrowDownRight className="w-3.5 h-3.5" />
                             </div>
                           )}
-                          <span className="font-medium text-foreground text-sm truncate">
-                            {tx.establishment}
-                          </span>
                           <InstallmentBadge
                             isInstallment={tx.isInstallment}
                             current={tx.currentInstallment}
                             total={tx.totalInstallments}
                           />
+                          <span className="font-medium text-foreground text-sm truncate">
+                            {tx.establishment}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell className="text-sm">{tx.primaryCategory}</TableCell>

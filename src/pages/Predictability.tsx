@@ -1,7 +1,7 @@
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { CalendarClock, Layers } from 'lucide-react'
+import { CalendarClock } from 'lucide-react'
 import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 import {
   Table,
@@ -89,29 +89,21 @@ export default function Predictability() {
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
-                              <span className="font-medium text-sm truncate">
-                                {tx.establishment}
-                              </span>
                               <InstallmentBadge
                                 isInstallment={tx.isInstallment}
                                 current={tx.currentInstallment}
                                 total={tx.totalInstallments}
                               />
+                              <span className="font-medium text-sm truncate">
+                                {tx.establishment}
+                              </span>
                             </div>
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {tx.primaryCategory}
                           </TableCell>
                           <TableCell className="text-right font-semibold text-sm">
-                            <div className="flex items-center justify-end gap-1.5">
-                              {tx.isInstallment && (
-                                <Layers
-                                  className="w-3.5 h-3.5 text-muted-foreground opacity-60"
-                                  title="Despesa Parcelada"
-                                />
-                              )}
-                              <span>{formatCurrency(tx.value)}</span>
-                            </div>
+                            {formatCurrency(tx.value)}
                           </TableCell>
                         </TableRow>
                       ))}
