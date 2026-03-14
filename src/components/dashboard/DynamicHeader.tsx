@@ -17,25 +17,22 @@ const monthNames: Record<string, string> = {
 }
 
 export function DynamicHeader() {
-  const { selectedMonths } = useDashboard()
+  const { selectedYear, selectedMonthValues } = useDashboard()
 
-  let headerText = 'Visão Geral'
+  let headerText = `Visão Geral ${selectedYear}`
 
-  if (selectedMonths.length === 1) {
-    const [y, m] = selectedMonths[0].split('-')
-    headerText = `Visão geral de ${monthNames[m]} ${y}`
-  } else if (selectedMonths.length > 1) {
-    const sorted = [...selectedMonths].sort()
+  if (selectedMonthValues.length === 1) {
+    headerText = `Visão geral de ${monthNames[selectedMonthValues[0]]} ${selectedYear}`
+  } else if (selectedMonthValues.length > 1) {
+    const sorted = [...selectedMonthValues].sort()
     const first = sorted[0]
     const last = sorted[sorted.length - 1]
-    const [y1, m1] = first.split('-')
-    const [y2, m2] = last.split('-')
-    headerText = `Visão geral de ${monthNames[m1]} ${y1} a ${monthNames[m2]} ${y2}`
+    headerText = `Visão geral de ${monthNames[first]} a ${monthNames[last]} ${selectedYear}`
   }
 
   return (
     <div className="flex items-center gap-4 mb-2 animate-fade-in-up">
-      <div className="p-3 bg-primary/10 text-primary rounded-2xl backdrop-blur-sm border border-primary/20 shadow-sm">
+      <div className="p-3 bg-primary/10 text-primary rounded-2xl border border-primary/20 shadow-sm">
         <CalendarDays className="w-6 h-6" />
       </div>
       <div>
@@ -43,7 +40,7 @@ export function DynamicHeader() {
           {headerText}
         </h1>
         <p className="text-sm font-medium text-muted-foreground mt-0.5">
-          Análise financeira e acompanhamento de metas
+          Painel Financeiro e Análise Preditiva
         </p>
       </div>
     </div>

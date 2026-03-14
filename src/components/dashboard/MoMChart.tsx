@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
+  LabelList,
 } from 'recharts'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -65,6 +66,8 @@ export function MoMChart() {
     despesas: { label: 'Despesas', color: 'hsl(var(--destructive))' },
   }
 
+  const formatK = (val: number) => (val > 0 ? `${(val / 1000).toFixed(1).replace('.0', '')}k` : '')
+
   return (
     <Card className="glass h-full flex flex-col">
       <CardHeader className="pb-2">
@@ -81,7 +84,7 @@ export function MoMChart() {
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <BarChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid
                   vertical={false}
                   strokeDasharray="3 3"
@@ -95,14 +98,7 @@ export function MoMChart() {
                   tickMargin={10}
                   className="text-xs font-medium fill-muted-foreground"
                 />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) =>
-                    `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
-                  }
-                  className="text-xs font-medium"
-                />
+                <YAxis hide domain={['auto', 'auto']} />
                 <Tooltip
                   content={<ChartTooltipContent />}
                   cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
@@ -112,14 +108,30 @@ export function MoMChart() {
                   dataKey="receitas"
                   fill="var(--color-receitas)"
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={32}
-                />
+                  maxBarSize={40}
+                >
+                  <LabelList
+                    dataKey="receitas"
+                    position="top"
+                    formatter={formatK}
+                    className="fill-foreground font-semibold text-[10px]"
+                    offset={4}
+                  />
+                </Bar>
                 <Bar
                   dataKey="despesas"
                   fill="var(--color-despesas)"
                   radius={[4, 4, 0, 0]}
-                  maxBarSize={32}
-                />
+                  maxBarSize={40}
+                >
+                  <LabelList
+                    dataKey="despesas"
+                    position="top"
+                    formatter={formatK}
+                    className="fill-foreground font-semibold text-[10px]"
+                    offset={4}
+                  />
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>

@@ -1,7 +1,7 @@
 import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
 import { FilterSection } from '@/components/dashboard/FilterSection'
 import { Button } from '@/components/ui/button'
-import { FileDown } from 'lucide-react'
+import { FileSpreadsheet } from 'lucide-react'
 import { exportToCSV } from '@/lib/export'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 
@@ -9,7 +9,7 @@ export default function Reports() {
   const filteredData = useFilteredExpenses(true)
 
   return (
-    <div className="max-w-7xl mx-auto animate-fade-in">
+    <div className="max-w-[1400px] mx-auto animate-fade-in">
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
@@ -21,12 +21,11 @@ export default function Reports() {
             </p>
           </div>
           <Button
-            variant="outline"
             onClick={() => exportToCSV(filteredData, 'relatorio_filtrado.csv')}
-            className="gap-2 shrink-0 border-success/30 hover:border-success/60 text-success hover:text-success/90 hover:bg-success/5"
+            className="gap-2 shrink-0 bg-success hover:bg-success/90 text-success-foreground shadow-md"
           >
-            <FileDown className="w-4 h-4" />
-            Exportar Filtrados (CSV)
+            <FileSpreadsheet className="w-4 h-4" />
+            Exportar Excel (CSV)
           </Button>
         </div>
         <FilterSection />

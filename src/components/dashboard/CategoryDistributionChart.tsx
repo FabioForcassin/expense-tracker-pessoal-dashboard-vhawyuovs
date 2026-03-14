@@ -36,7 +36,7 @@ export function CategoryDistributionChart() {
   } else {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
     if (cat && cat.name !== 'Receitas') {
-      const baseHue = 243
+      const baseHue = 221 // Match Fintech Blue
       rawData = cat.subcategories
         .map((sub, idx) => ({
           name: sub,
@@ -89,13 +89,13 @@ export function CategoryDistributionChart() {
           Composição de Gastos
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 min-h-[300px] w-full mt-2">
+      <CardContent className="flex-1 min-h-[300px] w-full mt-2 pr-6">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 0, right: 80, left: 0, bottom: 0 }}
+              margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -118,25 +118,26 @@ export function CategoryDistributionChart() {
                 content={<ChartTooltipContent />}
                 cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
               />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={28}>
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
+                {/* Percentage strictly inside */}
                 <LabelList
                   dataKey="percentage"
-                  position="insideLeft"
+                  position="inside"
                   fill="#ffffff"
                   formatter={(val: number) => `${val.toFixed(1)}%`}
                   className="font-bold text-[11px]"
-                  offset={10}
                 />
+                {/* Absolute value strictly outside right */}
                 <LabelList
                   dataKey="value"
                   position="right"
                   fill="hsl(var(--foreground))"
                   formatter={(val: number) => formatCurrency(val)}
-                  className="font-medium text-[11px]"
-                  offset={8}
+                  className="font-semibold text-xs"
+                  offset={12}
                 />
               </Bar>
             </BarChart>

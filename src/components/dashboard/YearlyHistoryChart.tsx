@@ -7,6 +7,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LabelList,
 } from 'recharts'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,25 +15,28 @@ import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 import { History } from 'lucide-react'
 
 export function YearlyHistoryChart() {
+  // Pass applyMonthFilter = false to get full year history ignoring Month & Year selects
   const allExpenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
 
   const years = ['2024', '2025', '2026']
   const data = years.map((year) => {
     const yearExpenses = allExpenses.filter((e) => e.date.startsWith(year))
     const total = yearExpenses.reduce((sum, e) => sum + e.value, 0)
-    return { year, value: total, fill: 'var(--color-value)' }
+    return { year, value: total, fill: 'hsl(var(--chart-3))' }
   })
 
   const chartConfig = {
-    value: { label: 'Gasto Total', color: 'hsl(var(--chart-4))' },
+    value: { label: 'Gasto Total' },
   }
+
+  const formatK = (val: number) => (val > 0 ? `${(val / 1000).toFixed(1).replace('.0', '')}k` : '')
 
   return (
     <Card className="glass h-full flex flex-col">
       <CardHeader className="pb-2">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
-          <History className="w-4 h-4 text-chart-4" />
-          Histórico Realizado (2024-2026)
+          <History className="w-4 h-4 text-chart-3" />
+          Histórico Realizado (Anual)
         </CardTitle>
       </CardHeader>
       <CardContent className="flex-1 min-h-[300px] w-full mt-2">
@@ -50,19 +54,14 @@ export function YearlyHistoryChart() {
                 tickLine={false}
                 axisLine={false}
                 tickMargin={10}
-                className="text-sm font-medium"
+                className="text-sm font-medium fill-muted-foreground"
               />
-              <YAxis
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(val) => `R$${val >= 1000 ? (val / 1000).toFixed(0) + 'k' : val}`}
-                className="text-xs font-medium"
-              />
+              <YAxis hide domain={['auto', 'auto']} />
               <Tooltip
                 content={<ChartTooltipContent />}
                 cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
               />
-              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48}>
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={60}>
                 {data.map((entry, index) => (
                   <Cell
                     key={`cell-${index}`}
@@ -70,6 +69,13 @@ export function YearlyHistoryChart() {
                     opacity={entry.value > 0 ? 1 : 0.2}
                   />
                 ))}
+                <LabelList
+                  dataKey="value"
+                  position="top"
+                  formatter={formatK}
+                  className="fill-foreground font-semibold text-xs"
+                  offset={6}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

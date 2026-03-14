@@ -6,70 +6,71 @@
 
 @layer base {
   :root {
-    /* Slate / Indigo / Emerald Professional Theme */
-    --background: 210 20% 98%; /* Slate 50 */
-    --foreground: 222 47% 11%; /* Slate 900 */
+    /* Modern Fintech Theme - Light */
+    --background: 220 14% 96%; /* Light gray-zinc */
+    --foreground: 224 71% 4%; /* Near black */
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 224 71% 4%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: 224 71% 4%;
 
-    /* Indigo 600 as Primary */
-    --primary: 243 75% 59%;
+    /* Sharp Trust Blue */
+    --primary: 221 83% 53%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220.9 39.3% 11%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 8.9% 46.1%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 220 14% 96%;
+    --accent-foreground: 220.9 39.3% 11%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Emerald 600 as Success */
-    --success: 158 64% 39%;
+    /* Vivid Emerald for Success */
+    --success: 160 84% 39%;
     --success-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 243 75% 59%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 221 83% 53%;
 
-    --radius: 1rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 210 20% 98%;
-    --sidebar-foreground: 222 47% 11%;
-    --sidebar-primary: 243 75% 59%;
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 224 71% 4%;
+    --sidebar-primary: 221 83% 53%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 40% 96.1%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 214.3 31.8% 91.4%;
-    --sidebar-ring: 243 75% 59%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 224 71% 4%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 221 83% 53%;
 
-    /* Professional Chart Colors (Indigo, Emerald, Sky, Violet, Amber) */
-    --chart-1: 243 75% 59%; /* Indigo */
-    --chart-2: 158 64% 39%; /* Emerald */
+    /* Professional Chart Colors (Fintech palette) */
+    --chart-1: 221 83% 53%; /* Primary Blue */
+    --chart-2: 160 84% 39%; /* Emerald */
     --chart-3: 199 89% 48%; /* Sky */
     --chart-4: 262 83% 58%; /* Violet */
     --chart-5: 45 93% 47%; /* Amber */
   }
 
   .dark {
-    --background: 222 47% 11%;
+    /* Modern Fintech Theme - Dark */
+    --background: 224 71% 4%; /* Deep Space */
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 13%;
+    --card: 222 47% 7%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 13%;
+    --popover: 222 47% 7%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 243 75% 65%;
+    --primary: 217 91% 60%;
     --primary-foreground: 222 47% 11%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -81,27 +82,27 @@
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 62.8% 50.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 158 64% 45%;
+    --success: 160 84% 45%;
     --success-foreground: 210 40% 98%;
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 243 75% 65%;
+    --ring: 224 76% 48%;
 
-    --sidebar-background: 222 47% 11%;
+    --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 243 75% 65%;
+    --sidebar-primary: 217 91% 60%;
     --sidebar-primary-foreground: 222 47% 11%;
     --sidebar-accent: 217.2 32.6% 17.5%;
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 217.2 32.6% 17.5%;
-    --sidebar-ring: 243 75% 65%;
+    --sidebar-ring: 224 76% 48%;
 
-    --chart-1: 243 75% 65%;
-    --chart-2: 158 64% 45%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 160 84% 45%;
     --chart-3: 199 89% 55%;
     --chart-4: 262 83% 65%;
     --chart-5: 45 93% 55%;
@@ -158,9 +159,9 @@
     }
   }
 
-  /* Glassmorphism utility */
+  /* Glassmorphism utility updated for crisper fintech look */
   .glass {
-    @apply bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-subtle;
+    @apply bg-card border border-border shadow-sm;
   }
 
   .animate-accordion-down {

@@ -40,7 +40,7 @@ export function KPICards() {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6 mb-6">
       <Card className="glass overflow-hidden relative">
-        <div className="absolute -right-6 -top-6 p-4 opacity-[0.03] pointer-events-none">
+        <div className="absolute -right-6 -top-6 p-4 opacity-[0.02] pointer-events-none text-foreground">
           <Target className="w-32 h-32" />
         </div>
         <CardContent className="p-6 relative z-10">
@@ -48,7 +48,7 @@ export function KPICards() {
             <h3 className="text-sm font-semibold tracking-tight text-muted-foreground uppercase">
               Orçado Global
             </h3>
-            <div className="p-2.5 bg-primary/10 text-primary rounded-xl backdrop-blur-sm border border-primary/10">
+            <div className="p-2.5 bg-primary/10 text-primary rounded-xl border border-primary/10 shadow-sm">
               <Target className="w-4 h-4" />
             </div>
           </div>
@@ -62,7 +62,7 @@ export function KPICards() {
       </Card>
 
       <Card className="glass overflow-hidden relative">
-        <div className="absolute -right-6 -top-6 p-4 opacity-[0.03] pointer-events-none">
+        <div className="absolute -right-6 -top-6 p-4 opacity-[0.02] pointer-events-none text-foreground">
           <Activity className="w-32 h-32" />
         </div>
         <CardContent className="p-6 relative z-10">
@@ -70,7 +70,7 @@ export function KPICards() {
             <h3 className="text-sm font-semibold tracking-tight text-muted-foreground uppercase">
               Realizado Global
             </h3>
-            <div className="p-2.5 bg-orange-500/10 text-orange-600 rounded-xl backdrop-blur-sm border border-orange-500/10">
+            <div className="p-2.5 bg-orange-500/10 text-orange-600 rounded-xl border border-orange-500/10 shadow-sm">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -81,7 +81,7 @@ export function KPICards() {
             <Progress
               value={Math.min(progressPerc, 100)}
               className={cn(
-                'h-2 flex-1',
+                'h-2.5 flex-1',
                 isOverBudget
                   ? '[&>div]:bg-destructive bg-destructive/20'
                   : '[&>div]:bg-primary bg-primary/20',
@@ -123,8 +123,8 @@ export function KPICards() {
               className={cn(
                 'text-xs font-semibold px-2.5 py-1 rounded-full transition-colors',
                 saldo >= 0
-                  ? 'bg-success/15 text-success border border-success/20'
-                  : 'bg-destructive/15 text-destructive border border-destructive/20',
+                  ? 'bg-success/10 text-success border border-success/20'
+                  : 'bg-destructive/10 text-destructive border border-destructive/20',
               )}
             >
               {saldo >= 0 ? 'Dentro do orçamento' : 'Orçamento estourado'}

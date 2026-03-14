@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Database as DatabaseIcon, Download, FileDown } from 'lucide-react'
+import { Database as DatabaseIcon, Download, FileSpreadsheet } from 'lucide-react'
 import { ImportDataModal } from '@/components/modals/ImportBudgetModal'
 import { exportToCSV } from '@/lib/export'
 
@@ -65,14 +65,14 @@ function BudgetCell({
       value={val}
       onChange={(e) => setVal(e.target.value)}
       onBlur={handleBlur}
-      className="h-8 w-full min-w-[70px] max-w-[90px] text-right text-xs px-2 bg-transparent focus:bg-background"
+      className="h-8 w-full min-w-[70px] max-w-[90px] text-right text-xs px-2 bg-transparent focus:bg-background border-transparent focus:border-border"
     />
   )
 }
 
 export default function Database() {
   const { categories, budget, updateBudget, expenses } = useDashboard()
-  const [selectedYear, setSelectedYear] = useState('2024')
+  const [localYear, setLocalYear] = useState('2024')
   const [isImportModalOpen, setImportModalOpen] = useState(false)
 
   return (
@@ -91,14 +91,13 @@ export default function Database() {
         </div>
         <div className="flex items-center gap-2">
           <Button
-            variant="outline"
             onClick={() => exportToCSV(expenses, 'dados_historico.csv')}
-            className="gap-2 shrink-0 border-success/30 hover:border-success/60 text-success hover:text-success/90 hover:bg-success/5"
+            className="gap-2 shrink-0 bg-success hover:bg-success/90 text-success-foreground shadow-md"
           >
-            <FileDown className="w-4 h-4" />
-            Exportar CSV
+            <FileSpreadsheet className="w-4 h-4" />
+            Exportar Excel
           </Button>
-          <Button onClick={() => setImportModalOpen(true)} className="gap-2 shrink-0">
+          <Button onClick={() => setImportModalOpen(true)} className="gap-2 shrink-0 shadow-md">
             <Download className="w-4 h-4" />
             Importar Lote
           </Button>
@@ -106,21 +105,25 @@ export default function Database() {
       </div>
 
       <Tabs defaultValue="orcamento" className="w-full">
-        <TabsList className="grid w-full max-w-[400px] grid-cols-2 mb-4">
-          <TabsTrigger value="orcamento">Orçamento (Grid)</TabsTrigger>
-          <TabsTrigger value="realizado">Realizado</TabsTrigger>
+        <TabsList className="grid w-full max-w-[400px] grid-cols-2 mb-4 bg-muted/50 p-1">
+          <TabsTrigger value="orcamento" className="data-[state=active]:bg-background shadow-sm">
+            Orçamento (Grid)
+          </TabsTrigger>
+          <TabsTrigger value="realizado" className="data-[state=active]:bg-background shadow-sm">
+            Realizado
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="orcamento" className="flex flex-col gap-4 mt-0">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between bg-card p-4 rounded-lg border shadow-sm">
             <p className="text-sm text-muted-foreground">
               Edite as metas mensais diretamente na tabela. As alterações são salvas
               automaticamente.
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">Ano Fical:</span>
-              <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger className="w-[120px] h-9">
+              <span className="text-sm font-medium text-foreground">Ano Fical:</span>
+              <Select value={localYear} onValueChange={setLocalYear}>
+                <SelectTrigger className="w-[120px] h-9 bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -132,7 +135,7 @@ export default function Database() {
             </div>
           </div>
 
-          <div className="rounded-md border bg-card text-card-foreground shadow-sm overflow-hidden flex-1">
+          <div className="rounded-lg border bg-card text-card-foreground shadow-sm overflow-hidden flex-1">
             <div className="overflow-x-auto max-h-[600px] scroll-smooth relative">
               <Table className="w-full border-collapse text-sm">
                 <TableHeader className="sticky top-0 z-30 bg-muted/95 backdrop-blur shadow-sm">
@@ -144,11 +147,14 @@ export default function Database() {
                       Subcategoria
                     </TableHead>
                     {monthsLabels.map((m) => (
-                      <TableHead key={m} className="min-w-[90px] text-right pr-4">
+                      <TableHead
+                        key={m}
+                        className="min-w-[90px] text-right pr-4 font-semibold text-foreground"
+                      >
                         {m}
                       </TableHead>
                     ))}
-                    <TableHead className="min-w-[100px] text-right font-bold pr-4 border-l">
+                    <TableHead className="min-w-[100px] text-right font-bold pr-4 border-l bg-muted">
                       Total Ano
                     </TableHead>
                   </TableRow>
@@ -158,20 +164,26 @@ export default function Database() {
                     cat.subcategories.map((sub, i) => {
                       let rowTotal = 0
                       return (
-                        <TableRow key={`${cat.name}-${sub}`} className="hover:bg-muted/30">
-                          <TableCell className="sticky left-0 z-20 bg-background/95 backdrop-blur font-medium text-xs text-muted-foreground">
+                        <TableRow
+                          key={`${cat.name}-${sub}`}
+                          className="hover:bg-muted/30 border-b border-border/50"
+                        >
+                          <TableCell className="sticky left-0 z-20 bg-card font-medium text-xs text-muted-foreground border-r border-border/10">
                             {cat.name}
                           </TableCell>
-                          <TableCell className="sticky left-[150px] z-20 bg-background/95 backdrop-blur border-r text-xs">
+                          <TableCell className="sticky left-[150px] z-20 bg-card border-r text-xs font-medium text-foreground">
                             {sub}
                           </TableCell>
                           {monthsLabels.map((_, mIdx) => {
-                            const monthKey = `${selectedYear}-${String(mIdx + 1).padStart(2, '0')}`
+                            const monthKey = `${localYear}-${String(mIdx + 1).padStart(2, '0')}`
                             const key = `${cat.name}|${sub}|${monthKey}`
                             const val = budget[key] || 0
                             rowTotal += val
                             return (
-                              <TableCell key={mIdx} className="p-1">
+                              <TableCell
+                                key={mIdx}
+                                className="p-1 border-r border-border/20 last:border-0"
+                              >
                                 <BudgetCell
                                   initialValue={val}
                                   onSave={(newVal) => updateBudget(key, newVal)}
@@ -179,7 +191,7 @@ export default function Database() {
                               </TableCell>
                             )
                           })}
-                          <TableCell className="text-right font-bold text-xs pr-4 border-l bg-muted/10">
+                          <TableCell className="text-right font-bold text-xs pr-4 border-l bg-muted/20 text-primary">
                             {rowTotal.toLocaleString('pt-BR', { minimumFractionDigits: 0 })}
                           </TableCell>
                         </TableRow>

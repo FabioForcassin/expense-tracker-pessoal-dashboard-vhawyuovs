@@ -1,11 +1,11 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, useMemo } from 'react'
 import { Expense, AppCategory, BudgetStore, getAccountType } from '@/types'
 
 export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_receitas',
     name: 'Receitas',
-    color: 'hsl(158 64% 39%)',
+    color: 'hsl(160 84% 39%)',
     icon: 'TrendingUp',
     subcategories: [
       'Salário',
@@ -37,7 +37,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_moradia',
     name: 'Moradia',
-    color: 'hsl(243 75% 59%)',
+    color: 'hsl(221 83% 53%)',
     icon: 'Home',
     subcategories: [
       'Condomínio',
@@ -328,12 +328,57 @@ const INITIAL_EXPENSES: Expense[] = [
     classification: 'Pessoal',
     who: 'Fabio',
   },
+  // Future Predictability Mock Data (Future dates)
+  {
+    id: '400',
+    date: '2028-05-10',
+    monthNum: 5,
+    competency: 'Mai',
+    establishment: 'Parcela Carro',
+    primaryCategory: 'Transporte',
+    secondaryCategory: 'Financiamento do Carro',
+    type: 'Fixa',
+    paymentMethod: 'Itaú',
+    value: 1500.0,
+    comment: 'Parcela 24/36',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
+  {
+    id: '401',
+    date: '2028-06-10',
+    monthNum: 6,
+    competency: 'Jun',
+    establishment: 'Parcela Carro',
+    primaryCategory: 'Transporte',
+    secondaryCategory: 'Financiamento do Carro',
+    type: 'Fixa',
+    paymentMethod: 'Itaú',
+    value: 1500.0,
+    comment: 'Parcela 25/36',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
+  {
+    id: '402',
+    date: '2028-05-15',
+    monthNum: 5,
+    competency: 'Mai',
+    establishment: 'Seguro Residencial Anual',
+    primaryCategory: 'Moradia',
+    secondaryCategory: 'Seguro Residencial',
+    type: 'Fixa',
+    paymentMethod: 'CC Itaú visa infinity',
+    value: 1200.0,
+    comment: 'Parcela 1/4',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
 ]
 
-// Generate an initial default budget spanning 2024-2026
 const generateInitialBudget = (): BudgetStore => {
   const budget: BudgetStore = {}
-  const years = [2024, 2025, 2026]
+  const years = [2024, 2025, 2026, 2027, 2028]
 
   INITIAL_CATEGORIES.forEach((cat) => {
     cat.subcategories.forEach((sub) => {
@@ -342,7 +387,7 @@ const generateInitialBudget = (): BudgetStore => {
         for (let month = 1; month <= 12; month++) {
           const monthStr = month.toString().padStart(2, '0')
           budget[`${cat.name}|${sub}|${year}-${monthStr}`] =
-            defaultVal * (year === 2024 ? 1 : year === 2025 ? 1.05 : 1.1) // slightly increase budget per year
+            defaultVal * (year === 2024 ? 1 : year === 2025 ? 1.05 : 1.1)
         }
       })
     })
@@ -354,14 +399,19 @@ interface DashboardContextType {
   categories: AppCategory[]
   expenses: Expense[]
   budget: BudgetStore
-  selectedMonths: string[]
-  setSelectedMonths: (m: string[]) => void
+  selectedYear: string
+  setSelectedYear: (y: string) => void
+  selectedMonthValues: string[]
+  setSelectedMonthValues: (m: string[]) => void
+  selectedMonths: string[] // Derived
   selectedPrimaryCat: string | null
   setSelectedPrimaryCat: (id: string | null) => void
   selectedSecondaryCats: string[]
   toggleSecondaryCat: (name: string) => void
   selectedAccountTypes: string[]
   toggleAccountType: (type: string) => void
+  selectedAccounts: string[]
+  toggleAccount: (account: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => void
   updateBudget: (key: string, value: number) => void
   bulkImportData: (type: 'realizado' | 'orcamento', year: string) => void
@@ -373,10 +423,19 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [categories] = useState<AppCategory[]>(INITIAL_CATEGORIES)
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES)
   const [budget, setBudget] = useState<BudgetStore>(generateInitialBudget())
-  const [selectedMonths, setSelectedMonths] = useState<string[]>(['2024-03'])
+
+  const [selectedYear, setSelectedYear] = useState<string>('2024')
+  const [selectedMonthValues, setSelectedMonthValues] = useState<string[]>(['03'])
+
+  const selectedMonths = useMemo(() => {
+    return selectedMonthValues.map((m) => `${selectedYear}-${m}`)
+  }, [selectedYear, selectedMonthValues])
+
   const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
   const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
+
   const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([])
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
 
   const toggleSecondaryCat = (name: string) => {
     setSelectedSecondaryCats((prev) =>
@@ -392,6 +451,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const toggleAccountType = (type: string) => {
     setSelectedAccountTypes((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    )
+  }
+
+  const toggleAccount = (account: string) => {
+    setSelectedAccounts((prev) =>
+      prev.includes(account) ? prev.filter((a) => a !== account) : [...prev, account],
     )
   }
 
@@ -458,14 +523,19 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         categories,
         expenses,
         budget,
+        selectedYear,
+        setSelectedYear,
+        selectedMonthValues,
+        setSelectedMonthValues,
         selectedMonths,
-        setSelectedMonths,
         selectedPrimaryCat,
         setSelectedPrimaryCat: handleSetPrimaryCat,
         selectedSecondaryCats,
         toggleSecondaryCat,
         selectedAccountTypes,
         toggleAccountType,
+        selectedAccounts,
+        toggleAccount,
         addExpense,
         updateBudget,
         bulkImportData,
@@ -489,16 +559,26 @@ export function useFilteredExpenses(applyMonthFilter = true) {
   const {
     expenses,
     selectedMonths,
+    selectedYear,
     selectedPrimaryCat,
     selectedSecondaryCats,
     selectedAccountTypes,
+    selectedAccounts,
     categories,
   } = context
 
   let filtered = expenses
 
-  if (applyMonthFilter && selectedMonths.length > 0) {
-    filtered = filtered.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
+  // By default, apply month filters. If applyMonthFilter is false, we might still want to apply the year filter depending on context.
+  // Actually, for yearly comparison, we don't apply month or year. We want full history.
+  // We'll let applyMonthFilter = false bypass both year and month filters.
+  if (applyMonthFilter) {
+    if (selectedMonths.length > 0) {
+      filtered = filtered.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
+    } else if (selectedYear) {
+      // If no month selected, just filter by year
+      filtered = filtered.filter((e) => e.date.startsWith(selectedYear))
+    }
   }
 
   if (selectedPrimaryCat) {
@@ -514,10 +594,15 @@ export function useFilteredExpenses(applyMonthFilter = true) {
     }
   }
 
-  if (selectedAccountTypes.length > 0) {
-    filtered = filtered.filter((e) =>
-      selectedAccountTypes.includes(getAccountType(e.paymentMethod)),
-    )
+  // Two-layer Account Filter
+  if (selectedAccountTypes.length > 0 || selectedAccounts.length > 0) {
+    filtered = filtered.filter((e) => {
+      const type = getAccountType(e.paymentMethod)
+      const matchesType = selectedAccountTypes.length === 0 || selectedAccountTypes.includes(type)
+      const matchesAccount =
+        selectedAccounts.length === 0 || selectedAccounts.includes(e.paymentMethod)
+      return matchesType && matchesAccount
+    })
   }
 
   return filtered

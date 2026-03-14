@@ -9,12 +9,15 @@ import { YearlyHistoryChart } from '@/components/dashboard/YearlyHistoryChart'
 import { TopExpensesList } from '@/components/dashboard/TopExpensesList'
 import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
 import { InsightsSection } from '@/components/dashboard/InsightsSection'
+import { PaymentTypeChart } from '@/components/dashboard/PaymentTypeChart'
+import { PredictabilityChart } from '@/components/dashboard/PredictabilityChart'
 
 export default function Index() {
   return (
-    <div className="max-w-7xl mx-auto flex flex-col gap-4 animate-fade-in pb-8">
+    <div className="max-w-[1400px] mx-auto flex flex-col gap-4 animate-fade-in pb-8">
       <DynamicHeader />
       <FilterSection />
+
       <KPICards />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6 mb-2">
@@ -36,7 +39,17 @@ export default function Index() {
         <YearlyHistoryChart />
       </div>
 
-      <InsightsSection />
+      <div className="mb-2">
+        <h3 className="text-xl font-bold tracking-tight text-foreground mb-4">
+          Analytics & Inteligência
+        </h3>
+        <InsightsSection />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
+        <PaymentTypeChart />
+        <PredictabilityChart />
+      </div>
 
       <TransactionsTable />
     </div>
