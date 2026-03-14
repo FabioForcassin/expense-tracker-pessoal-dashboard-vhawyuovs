@@ -41,6 +41,7 @@ export function AddExpenseModal({
   const [type, setType] = useState<'Fixa' | 'Variável'>('Variável')
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [payment, setPayment] = useState('')
+  const [installments, setInstallments] = useState(1)
   const [comment, setComment] = useState('')
   const [classification, setClassification] = useState('')
   const [who, setWho] = useState('')
@@ -65,8 +66,17 @@ export function AddExpenseModal({
     e.preventDefault()
     if (!value || !establishment || !primaryCat || !secondaryCat || !date || !payment) return
 
-    const [year, month] = date.split('-')
-    const monthNum = parseInt(month)
+    const baseValue = parseFloat(value)
+    const instCount = tab === 'expense' ? installments : 1
+    const baseInstValue = instCount > 1 ? parseFloat((baseValue / instCount).toFixed(2)) : baseValue
+    const remainder =
+      instCount > 1 ? parseFloat((baseValue - baseInstValue * instCount).toFixed(2)) : 0
+
+    const [yearStr, monthStr, dayStr] = date.split('-')
+    const startYear = parseInt(yearStr)
+    const startMonth = parseInt(monthStr) - 1
+    const day = parseInt(dayStr)
+
     const compMap = [
       'Jan',
       'Fev',
@@ -82,20 +92,41 @@ export function AddExpenseModal({
       'Dez',
     ]
 
-    addExpense({
-      value: parseFloat(value),
-      establishment,
-      primaryCategory: primaryCat,
-      secondaryCategory: secondaryCat,
-      type: tab === 'income' ? 'Receita' : type,
-      paymentMethod: payment,
-      date,
-      monthNum,
-      competency: compMap[monthNum - 1],
-      comment,
-      classification,
-      who,
-    })
+    for (let i = 0; i < instCount; i++) {
+      let m = startMonth + i
+      const y = startYear + Math.floor(m / 12)
+      m = m % 12
+
+      const newMonthNum = m + 1
+      const daysInMonth = new Date(y, newMonthNum, 0).getDate()
+      const validDay = Math.min(day, daysInMonth)
+
+      const newDateStr = `${y}-${newMonthNum.toString().padStart(2, '0')}-${validDay.toString().padStart(2, '0')}`
+
+      let finalComment = comment
+      if (instCount > 1) {
+        finalComment = comment
+          ? `${comment} (Parcela ${i + 1}/${instCount})`
+          : `Parcela ${i + 1}/${instCount}`
+      }
+
+      const val = i === 0 ? parseFloat((baseInstValue + remainder).toFixed(2)) : baseInstValue
+
+      addExpense({
+        value: val,
+        establishment,
+        primaryCategory: primaryCat,
+        secondaryCategory: secondaryCat,
+        type: tab === 'income' ? 'Receita' : type,
+        paymentMethod: payment,
+        date: newDateStr,
+        monthNum: newMonthNum,
+        competency: compMap[m],
+        comment: finalComment,
+        classification,
+        who,
+      })
+    }
 
     toast.success(
       tab === 'income' ? 'Receita registrada com sucesso!' : 'Despesa registrada com sucesso!',
@@ -110,6 +141,7 @@ export function AddExpenseModal({
     setSecondaryCat('')
     setType('Variável')
     setPayment('')
+    setInstallments(1)
     setComment('')
     setClassification('')
     setWho('')
@@ -130,6 +162,7 @@ export function AddExpenseModal({
                 setTab('expense')
                 setPrimaryCat('')
                 setSecondaryCat('')
+                setInstallments(1)
               }}
               className={cn(
                 'flex-1 text-sm font-medium py-1.5 rounded-md transition-all',
@@ -145,6 +178,7 @@ export function AddExpenseModal({
                 setTab('income')
                 setPrimaryCat('Receitas')
                 setSecondaryCat('')
+                setInstallments(1)
               }}
               className={cn(
                 'flex-1 text-sm font-medium py-1.5 rounded-md transition-all',
@@ -237,7 +271,7 @@ export function AddExpenseModal({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {tab === 'expense' && (
               <div className="grid gap-2">
                 <Label>Tipo de Gasto</Label>
@@ -252,7 +286,7 @@ export function AddExpenseModal({
                 </Select>
               </div>
             )}
-            <div className={cn('grid gap-2', tab === 'income' ? 'sm:col-span-2' : '')}>
+            <div className={cn('grid gap-2', tab === 'income' ? 'sm:col-span-3' : '')}>
               <Label>Forma de Pagamento</Label>
               <Select value={payment} onValueChange={setPayment} required>
                 <SelectTrigger>
@@ -267,6 +301,27 @@ export function AddExpenseModal({
                 </SelectContent>
               </Select>
             </div>
+            {tab === 'expense' && (
+              <div className="grid gap-2">
+                <Label>Qtd. Parcelas</Label>
+                <Select
+                  value={installments.toString()}
+                  onValueChange={(v) => setInstallments(parseInt(v))}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                      <SelectItem key={n} value={n.toString()}>
+                        {n}x
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
