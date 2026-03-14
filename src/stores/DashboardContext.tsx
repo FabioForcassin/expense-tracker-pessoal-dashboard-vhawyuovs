@@ -7,6 +7,7 @@ import {
   DBCategory,
   DBGoal,
   DBPaymentMethod,
+  Profile,
 } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -248,6 +249,13 @@ const generateInitialBudget = (): BudgetStore => {
 }
 
 interface DashboardContextType {
+  isAdmin: boolean
+  isGlobalView: boolean
+  setIsGlobalView: (v: boolean) => void
+  adminSelectedUserId: string
+  setAdminSelectedUserId: (id: string) => void
+  profiles: Profile[]
+  fetchProfiles: () => Promise<void>
   categories: AppCategory[]
   customCategories: DBCategory[]
   expenses: Expense[]
@@ -295,7 +303,13 @@ interface DashboardContextType {
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
+  const isAdmin = profile?.role === 'admin'
+
+  const [isGlobalView, setIsGlobalView] = useState(false)
+  const [adminSelectedUserId, setAdminSelectedUserId] = useState<string>('all')
+  const [profiles, setProfiles] = useState<Profile[]>([])
+
   const [customCategories, setCustomCategories] = useState<DBCategory[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [budget, setBudget] = useState<BudgetStore>(generateInitialBudget())
@@ -314,25 +328,40 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
 
   useEffect(() => {
-    if (user) {
+    if (user && profile) {
       fetchExpenses()
       fetchCustomCategories()
       fetchGoals()
       fetchPaymentMethods()
+      if (isAdmin) fetchProfiles()
     } else {
       setExpenses([])
       setCustomCategories([])
       setGoals([])
       setDbPaymentMethods([])
+      setProfiles([])
     }
-  }, [user])
+  }, [user, profile, isGlobalView, adminSelectedUserId, isAdmin])
+
+  const fetchProfiles = async () => {
+    if (!isAdmin) return
+    const { data, error } = await supabase.from('profiles' as any).select('*')
+    if (!error && data) {
+      setProfiles(data as Profile[])
+    }
+  }
 
   const fetchExpenses = async () => {
     if (!user) return
-    const { data, error } = await supabase
-      .from('expenses' as any)
-      .select('*')
-      .eq('user_id', user.id)
+    let query = supabase.from('expenses' as any).select('*')
+
+    if (!isGlobalView || !isAdmin) {
+      query = query.eq('user_id', user.id)
+    } else if (adminSelectedUserId !== 'all') {
+      query = query.eq('user_id', adminSelectedUserId)
+    }
+
+    const { data, error } = await query
     if (error) {
       console.error('Error fetching expenses:', error)
       return
@@ -360,10 +389,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const fetchCustomCategories = async () => {
     if (!user) return
-    const { data, error } = await supabase
-      .from('categories' as any)
-      .select('*, subcategories(*)')
-      .eq('user_id', user.id)
+    let query = supabase.from('categories' as any).select('*, subcategories(*)')
+
+    if (!isGlobalView || !isAdmin) {
+      query = query.eq('user_id', user.id)
+    } else if (adminSelectedUserId !== 'all') {
+      query = query.eq('user_id', adminSelectedUserId)
+    }
+
+    const { data, error } = await query
     if (error) {
       console.error('Error fetching categories:', error)
       return
@@ -373,10 +407,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const fetchGoals = async () => {
     if (!user) return
-    const { data, error } = await supabase
-      .from('goals' as any)
-      .select('*')
-      .eq('user_id', user.id)
+    let query = supabase.from('goals' as any).select('*')
+
+    if (!isGlobalView || !isAdmin) {
+      query = query.eq('user_id', user.id)
+    } else if (adminSelectedUserId !== 'all') {
+      query = query.eq('user_id', adminSelectedUserId)
+    }
+
+    const { data, error } = await query
     if (!error && data) {
       setGoals(data)
     }
@@ -384,10 +423,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
 
   const fetchPaymentMethods = async () => {
     if (!user) return
-    const { data, error } = await supabase
-      .from('payment_methods' as any)
-      .select('*')
-      .eq('user_id', user.id)
+    let query = supabase.from('payment_methods' as any).select('*')
+
+    if (!isGlobalView || !isAdmin) {
+      query = query.eq('user_id', user.id)
+    } else if (adminSelectedUserId !== 'all') {
+      query = query.eq('user_id', adminSelectedUserId)
+    }
+
+    const { data, error } = await query
     if (!error && data) {
       setDbPaymentMethods(data)
     }
@@ -448,14 +492,24 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     )
   }
 
+  const getTargetUserId = () => {
+    if (!user) return null
+    if (isAdmin && isGlobalView && adminSelectedUserId !== 'all') {
+      return adminSelectedUserId
+    }
+    return user.id
+  }
+
   const addExpense = async (e: Omit<Expense, 'id'>) => {
     await addExpenses([e])
   }
 
   const addExpenses = async (expensesToAdd: Omit<Expense, 'id'>[]) => {
-    if (!user) return
+    const targetUserId = getTargetUserId()
+    if (!targetUserId) return
+
     const payloads = expensesToAdd.map((e) => ({
-      user_id: user.id,
+      user_id: targetUserId,
       description: e.establishment,
       amount: e.value,
       category: e.primaryCategory,
@@ -515,22 +569,24 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }
 
   const resetDatabase = async () => {
-    if (!user) return
+    const targetUserId = getTargetUserId()
+    if (!targetUserId) return
     const { error } = await supabase
       .from('expenses' as any)
       .delete()
-      .eq('user_id', user.id)
+      .eq('user_id', targetUserId)
     if (error) {
       console.error('Error resetting database:', error)
       throw error
     }
-    setExpenses([])
+    fetchExpenses()
   }
 
   const addCategory = async (name: string, type: string) => {
-    if (!user) return
+    const targetUserId = getTargetUserId()
+    if (!targetUserId) return
     const payload = {
-      user_id: user.id,
+      user_id: targetUserId,
       name,
       type,
       color: type === 'Receita' ? 'hsl(160 84% 39%)' : 'hsl(220 70% 50%)',
@@ -593,7 +649,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     parsedData?: Expense[],
   ) => {
     if (type === 'realizado') {
-      if (!user) return
       let itemsToInsert = parsedData || []
       await addExpenses(itemsToInsert)
     } else {
@@ -613,8 +668,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     amount: number,
     challenge_amount: number = 0,
   ) => {
-    if (!user) return
-    const existing = goals.find((g) => g.month === month && g.year === year)
+    const targetUserId = getTargetUserId()
+    if (!targetUserId) return
+
+    const existing = goals.find(
+      (g) => g.month === month && g.year === year && g.user_id === targetUserId,
+    )
     if (existing) {
       const { error, data } = await supabase
         .from('goals' as any)
@@ -627,7 +686,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     } else {
       const { error, data } = await supabase
         .from('goals' as any)
-        .insert({ user_id: user.id, month, year, amount, challenge_amount })
+        .insert({ user_id: targetUserId, month, year, amount, challenge_amount })
         .select()
       if (!error && data) {
         setGoals((prev) => [...prev, data[0]])
@@ -636,10 +695,11 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }
 
   const addPaymentMethod = async (name: string, type: string) => {
-    if (!user) return
+    const targetUserId = getTargetUserId()
+    if (!targetUserId) return
     const { data, error } = await supabase
       .from('payment_methods' as any)
-      .insert({ user_id: user.id, name, type })
+      .insert({ user_id: targetUserId, name, type })
       .select()
     if (!error && data) {
       setDbPaymentMethods((prev) => [...prev, data[0]])
@@ -659,6 +719,13 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   return (
     <DashboardContext.Provider
       value={{
+        isAdmin,
+        isGlobalView,
+        setIsGlobalView,
+        adminSelectedUserId,
+        setAdminSelectedUserId,
+        profiles,
+        fetchProfiles,
         categories,
         customCategories,
         expenses,

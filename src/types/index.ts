@@ -1,3 +1,10 @@
+export interface Profile {
+  id: string
+  email: string
+  role: 'admin' | 'user' | string
+  created_at?: string
+}
+
 export interface Expense {
   id: string
   date: string // Format: YYYY-MM-DD

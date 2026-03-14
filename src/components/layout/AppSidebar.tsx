@@ -10,6 +10,7 @@ import {
   BellRing,
   TrendingUp,
   AlertTriangle,
+  Users,
 } from 'lucide-react'
 import {
   Sidebar,
@@ -27,7 +28,7 @@ import { formatCurrency, formatDate } from '@/lib/format'
 
 export function AppSidebar() {
   const location = useLocation()
-  const { expenses, goals } = useDashboard()
+  const { expenses, goals, isAdmin } = useDashboard()
 
   const mainItems = [
     { title: 'Visão Geral', url: '/', icon: LayoutDashboard },
@@ -104,6 +105,31 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isAdmin && (
+          <SidebarGroup className="mt-4">
+            <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">
+              Administração
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu className="gap-1 mt-2">
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={location.pathname === '/admin/users'}
+                    tooltip="Gerenciar Usuários"
+                    className="font-medium"
+                  >
+                    <Link to="/admin/users">
+                      <Users className="w-4 h-4 opacity-70" />
+                      <span>Usuários</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         <SidebarGroup className="mt-4">
           <SidebarGroupLabel className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">

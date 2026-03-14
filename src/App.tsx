@@ -12,6 +12,7 @@ import Management from './pages/Management'
 import Predictability from './pages/Predictability'
 import Goals from './pages/Goals'
 import Insights from './pages/Insights'
+import AdminUsers from './pages/admin/Users'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
 import { ReactNode } from 'react'
@@ -20,6 +21,13 @@ const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth()
   if (loading) return null
   if (!user) return <Navigate to="/login" />
+  return <>{children}</>
+}
+
+const AdminRoute = ({ children }: { children: ReactNode }) => {
+  const { profile, loading } = useAuth()
+  if (loading) return null
+  if (profile?.role !== 'admin') return <Navigate to="/" />
   return <>{children}</>
 }
 
@@ -46,6 +54,14 @@ const App = () => (
               <Route path="/management" element={<Management />} />
               <Route path="/database" element={<Database />} />
               <Route path="/reports" element={<Reports />} />
+              <Route
+                path="/admin/users"
+                element={
+                  <AdminRoute>
+                    <AdminUsers />
+                  </AdminRoute>
+                }
+              />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
