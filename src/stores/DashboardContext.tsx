@@ -554,7 +554,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
           type: isReceita ? 'Receita' : Math.random() > 0.5 ? 'Fixa' : 'Variável',
           paymentMethod: methods[Math.floor(Math.random() * methods.length)],
           value: parseFloat(val.toFixed(2)),
-          comment: 'Importado',
+          comment: '',
           classification: Math.random() > 0.8 ? 'Empresa' : 'Pessoal',
           who: 'Usuário',
         })

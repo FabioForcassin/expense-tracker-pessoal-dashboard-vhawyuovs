@@ -86,7 +86,7 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
                 paymentMethod: cols[8] || 'Dinheiro',
                 value: parseFloat(cols[9]) || 0,
                 // Column K is index 10
-                comment: cols[10] || '',
+                comment: cols[10] !== undefined ? cols[10] : '',
                 // Column L is index 11
                 classification: cols[11] || 'Pessoal',
                 // Column M is index 12
