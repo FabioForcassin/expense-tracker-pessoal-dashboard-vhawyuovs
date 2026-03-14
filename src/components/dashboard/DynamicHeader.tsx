@@ -13,7 +13,7 @@ export function DynamicHeader() {
 
   if (isAdmin && isGlobalView) {
     if (adminSelectedUserId === 'all') {
-      displayName = 'Todos os Usuários'
+      displayName = 'Todos'
     } else {
       const selectedProfile = profiles.find((p) => p.id === adminSelectedUserId)
       if (selectedProfile) {
@@ -32,7 +32,7 @@ export function DynamicHeader() {
       </div>
       <div>
         <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-foreground">
-          Visão Geral das despesas {displayName}
+          Visão Geral das despesas - {displayName}
         </h1>
         <p className="text-sm font-medium text-muted-foreground mt-0.5">
           Acessado em: {formattedDate} | Ano de Referência: {selectedYear}
