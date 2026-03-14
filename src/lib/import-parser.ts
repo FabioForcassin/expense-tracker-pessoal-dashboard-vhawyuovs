@@ -1,24 +1,27 @@
 import { Expense } from '@/types'
 
 function decodeText(buffer: ArrayBuffer): string {
-  let text = new TextDecoder('utf-8').decode(buffer)
-  if (text.includes('MÃªs') || text.includes('CompetÃªncia') || text.includes('ClassificaÃ§Ã£o')) {
-    try {
-      text = decodeURIComponent(escape(text))
-    } catch {
-      // ignore
+  try {
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(buffer)
+    if (text.includes('MÃªs') || text.includes('CompetÃªncia')) {
+      try {
+        return decodeURIComponent(escape(text))
+      } catch {
+        return text
+      }
     }
+    return text
+  } catch {
+    return new TextDecoder('windows-1252').decode(buffer)
   }
-  if (text.includes('')) {
-    text = new TextDecoder('iso-8859-1').decode(buffer)
-  }
-  return text
 }
 
-function parseCSVLine(text: string, separator: string): string[] {
-  const result: string[] = []
+function parseCSV(text: string, separator: string): string[][] {
+  const result: string[][] = []
+  let row: string[] = []
   let cur = ''
   let inQuotes = false
+
   for (let i = 0; i < text.length; i++) {
     const char = text[i]
     if (char === '"') {
@@ -29,13 +32,24 @@ function parseCSVLine(text: string, separator: string): string[] {
         inQuotes = !inQuotes
       }
     } else if (char === separator && !inQuotes) {
-      result.push(cur.trim())
+      row.push(cur.trim())
+      cur = ''
+    } else if ((char === '\n' || char === '\r') && !inQuotes) {
+      if (char === '\r' && text[i + 1] === '\n') {
+        i++
+      }
+      row.push(cur.trim())
+      if (row.some((c) => c)) result.push(row)
+      row = []
       cur = ''
     } else {
       cur += char
     }
   }
-  result.push(cur.trim())
+  if (cur || row.length > 0) {
+    row.push(cur.trim())
+    if (row.some((c) => c)) result.push(row)
+  }
   return result
 }
 
@@ -49,35 +63,38 @@ function determineMapping(headers: string[]) {
       .replace(/[^a-z0-9]/g, ''),
   )
 
-  const findIndex = (keywords: string[]) =>
-    norm.findIndex((h) => keywords.some((k) => h.includes(k)))
+  const findIndex = (keywords: string[]) => {
+    return norm.findIndex((h) => keywords.some((k) => h === k || h.includes(k)))
+  }
 
   const map = {
     date: findIndex(['data']),
     monthNum: findIndex(['mes']),
     competency: findIndex(['competencia']),
-    establishment: findIndex(['estabelecimento']),
-    primaryCategory: findIndex(['despesa', 'categoriaprincipal', 'categoria']),
-    secondaryCategory: -1,
-    type: findIndex(['fixa', 'variavel', 'tipo']),
-    paymentMethod: findIndex(['formapgto', 'formadepagto', 'conta']),
+    establishment: findIndex(['estabelecimento', 'local']),
+    primaryCategory: findIndex(['categoriaprincipal', 'categoria', 'despesa']),
+    secondaryCategory: findIndex(['subcategoria']),
+    type: findIndex(['tipo', 'fixa', 'variavel']),
+    paymentMethod: findIndex(['formadepagto', 'formapgto', 'conta']),
     value: findIndex(['valor']),
     comment: findIndex(['comentario', 'obs']),
-    classification: -1,
-    who: findIndex(['quem']),
-    installments: findIndex(['parcela']),
+    classification: findIndex(['classificacao']),
+    who: findIndex(['quem', 'responsavel']),
+    installments: findIndex(['parcelas', 'parcela']),
   }
 
-  const classIndexes: number[] = []
-  norm.forEach((h, i) => {
-    if (h.includes('classificacao') || h.includes('subcategoria')) classIndexes.push(i)
-  })
+  if (map.secondaryCategory === -1) {
+    const classIndexes: number[] = []
+    norm.forEach((h, i) => {
+      if (h.includes('classificacao') || h.includes('subcategoria') || h.includes('categoria')) {
+        classIndexes.push(i)
+      }
+    })
+    const uniqueIndexes = [...new Set(classIndexes)].filter((idx) => idx !== map.primaryCategory)
 
-  if (classIndexes.length >= 2) {
-    map.secondaryCategory = classIndexes[0]
-    map.classification = classIndexes[classIndexes.length - 1]
-  } else if (classIndexes.length === 1) {
-    map.secondaryCategory = classIndexes[0]
+    if (uniqueIndexes.length > 0) {
+      map.secondaryCategory = uniqueIndexes[0]
+    }
   }
 
   return map
@@ -86,10 +103,14 @@ function determineMapping(headers: string[]) {
 function parseDate(raw: string, defaultYear: string): string {
   if (!raw) return `${defaultYear}-01-01`
   const clean = raw.replace(/^"|"$/g, '').trim().split(' ')[0]
-  const brMatch = clean.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
+
+  const brMatch = clean.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})$/)
   if (brMatch) {
-    return `${brMatch[3]}-${brMatch[2].padStart(2, '0')}-${brMatch[1].padStart(2, '0')}`
+    let year = brMatch[3]
+    if (year.length === 2) year = `20${year}`
+    return `${year}-${brMatch[2].padStart(2, '0')}-${brMatch[1].padStart(2, '0')}`
   }
+
   const isoMatch = clean.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/)
   if (isoMatch) {
     return `${isoMatch[1]}-${isoMatch[2].padStart(2, '0')}-${isoMatch[3].padStart(2, '0')}`
@@ -138,33 +159,46 @@ export async function parseImportFile(
       const buffer = e.target?.result as ArrayBuffer
       const text = decodeText(buffer)
 
-      const lines = text.split(/\r?\n/)
+      const firstLine = text.split(/\r?\n/)[0] || ''
+      const commas = (firstLine.match(/,/g) || []).length
+      const semicolons = (firstLine.match(/;/g) || []).length
+      const sep = semicolons > commas ? ';' : ','
+
+      const lines = parseCSV(text, sep)
+
       let headerIdx = 0
       for (let i = 0; i < Math.min(lines.length, 10); i++) {
-        const lower = lines[i].toLowerCase()
-        if (lower.includes('data') && (lower.includes('valor') || lower.includes('competencia'))) {
+        const row = lines[i].map((c) => c.toLowerCase())
+        if (
+          row.some((c) => c.includes('data')) &&
+          row.some((c) => c.includes('valor') || c.includes('competencia'))
+        ) {
           headerIdx = i
           break
         }
       }
 
-      const sep = lines[headerIdx].includes(';') ? ';' : ','
-      const headers = parseCSVLine(lines[headerIdx], sep)
+      if (lines.length <= headerIdx) {
+        resolve({ parsed: [], errs: ['Cabeçalho não encontrado no arquivo.'] })
+        return
+      }
+
+      const headers = lines[headerIdx]
       const mapping = determineMapping(headers)
 
       const parsed: Expense[] = []
       const errs: string[] = []
 
       for (let i = headerIdx + 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue
-        const cols = parseCSVLine(lines[i], sep)
+        const cols = lines[i]
+        if (!cols || cols.length === 0 || cols.every((c) => !c.trim())) continue
 
         try {
-          const dt = cols[mapping.date]
+          const dt = mapping.date !== -1 ? cols[mapping.date] : ''
           if (!dt && cols.filter(Boolean).length < 3) continue
 
           const date = parseDate(dt, year)
-          const valRaw = cols[mapping.value] || '0'
+          const valRaw = mapping.value !== -1 ? cols[mapping.value] || '0' : '0'
           const val = parseValue(valRaw)
 
           parsed.push({
@@ -194,6 +228,7 @@ export async function parseImportFile(
       }
       resolve({ parsed, errs })
     }
+    reader.onerror = () => resolve({ parsed: [], errs: ['Erro ao ler o arquivo.'] })
     reader.readAsArrayBuffer(file)
   })
 }

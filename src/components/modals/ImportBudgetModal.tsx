@@ -32,7 +32,6 @@ import {
   TableCell,
 } from '@/components/ui/table'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Badge } from '@/components/ui/badge'
 
 export function ImportDataModal({
   open,
@@ -105,7 +104,7 @@ export function ImportDataModal({
 
   const confirmImport = () => {
     bulkImportData(importType, year, previewData)
-    toast.success(`${previewData.length} registros importados!`)
+    toast.success(`${previewData.length} registros importados com sucesso!`)
     resetModal()
   }
 
@@ -134,8 +133,8 @@ export function ImportDataModal({
           </DialogTitle>
           <DialogDescription>
             {step === 'upload'
-              ? 'Upload de planilhas para atualização.'
-              : 'Revise os dados antes da importação.'}
+              ? 'Upload de planilhas para atualização do histórico.'
+              : 'Revise os dados antes de finalizar a importação.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -176,7 +175,7 @@ export function ImportDataModal({
               onClick={downloadImportTemplate}
               className="w-full gap-2 text-primary mb-2 mt-2"
             >
-              <Download className="w-4 h-4" /> Template
+              <Download className="w-4 h-4" /> Baixar Template
             </Button>
             <label
               onDragOver={(e) => e.preventDefault()}
@@ -197,7 +196,9 @@ export function ImportDataModal({
             </label>
             {files.length > 0 && (
               <div className="mb-4">
-                <p className="text-sm font-semibold mb-2">Arquivos ({files.length}):</p>
+                <p className="text-sm font-semibold mb-2">
+                  Arquivos selecionados ({files.length}):
+                </p>
                 <ScrollArea className="h-24 border rounded p-2">
                   <div className="flex flex-col gap-2">
                     {files.map((f, i) => (
@@ -218,18 +219,22 @@ export function ImportDataModal({
                 Limpar
               </Button>
               <Button onClick={handleImport} disabled={!files.length || isProcessing}>
-                {isProcessing ? 'Analisando...' : 'Analisar'}
+                {isProcessing ? 'Analisando...' : 'Analisar Dados'}
               </Button>
             </div>
           </>
         ) : (
           <div className="flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center bg-muted/30 p-2 px-3 rounded border">
-              <span className="text-sm font-medium">Registros mapeados:</span>
-              <Badge className="bg-success text-white hover:bg-success/90">
-                {previewData.length}
-              </Badge>
-            </div>
+            <Alert className="bg-primary/5 border-primary/20">
+              <AlertCircle className="h-4 w-4 text-primary" />
+              <AlertTitle className="text-primary font-semibold">Resumo da Importação</AlertTitle>
+              <AlertDescription>
+                Foram detectados{' '}
+                <strong className="font-bold text-base">{previewData.length}</strong> registros.
+                Deseja prosseguir com a importação?
+              </AlertDescription>
+            </Alert>
+
             {importErrors.length > 0 && (
               <Alert variant="destructive" className="py-2">
                 <AlertCircle className="h-4 w-4" />
@@ -237,8 +242,8 @@ export function ImportDataModal({
                   Avisos de leitura ({importErrors.length})
                 </AlertTitle>
                 <AlertDescription>
-                  <ScrollArea className="h-16 text-xs">
-                    <ul className="list-disc pl-4">
+                  <ScrollArea className="h-20 text-xs mt-2">
+                    <ul className="list-disc pl-4 space-y-1">
                       {importErrors.map((err, i) => (
                         <li key={i}>{err}</li>
                       ))}
@@ -247,30 +252,33 @@ export function ImportDataModal({
                 </AlertDescription>
               </Alert>
             )}
+
             <div className="border rounded-md shadow-sm overflow-hidden">
               <ScrollArea className="h-[250px]">
                 <Table className="text-xs">
                   <TableHeader className="bg-muted/50 sticky top-0">
                     <TableRow>
                       <TableHead>Data</TableHead>
-                      <TableHead>Local</TableHead>
+                      <TableHead>Estabelecimento</TableHead>
                       <TableHead>Categoria</TableHead>
-                      <TableHead>Valor</TableHead>
+                      <TableHead>Subcategoria</TableHead>
+                      <TableHead className="text-right">Valor (R$)</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {previewData.slice(0, 15).map((r, i) => (
                       <TableRow key={i}>
                         <TableCell>{r.date}</TableCell>
-                        <TableCell>{r.establishment}</TableCell>
+                        <TableCell className="max-w-[150px] truncate">{r.establishment}</TableCell>
                         <TableCell>{r.primaryCategory}</TableCell>
+                        <TableCell>{r.secondaryCategory}</TableCell>
                         <TableCell className="text-right">{r.value.toFixed(2)}</TableCell>
                       </TableRow>
                     ))}
                     {previewData.length > 15 && (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-4">
-                          + {previewData.length - 15} registros ocultos
+                        <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                          + {previewData.length - 15} registros ocultos na pré-visualização
                         </TableCell>
                       </TableRow>
                     )}
@@ -282,7 +290,7 @@ export function ImportDataModal({
               <Button variant="outline" onClick={() => setStep('upload')}>
                 Voltar
               </Button>
-              <Button onClick={confirmImport}>Confirmar</Button>
+              <Button onClick={confirmImport}>Confirmar Importação</Button>
             </div>
           </div>
         )}

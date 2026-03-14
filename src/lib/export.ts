@@ -1,5 +1,7 @@
 import { Expense } from '@/types'
 
+const BOM = '\uFEFF'
+
 export function exportToCSV(data: Expense[], filename: string) {
   const headers = [
     'Data',
@@ -19,14 +21,29 @@ export function exportToCSV(data: Expense[], filename: string) {
   ]
 
   const csvContent = [
-    headers.join(','),
-    ...data.map(
-      (e) =>
-        `"${e.date}","${e.monthNum}","${e.competency}","","${e.establishment}","${e.primaryCategory}","${e.secondaryCategory}","${e.type}","${e.paymentMethod}",${e.value},"${e.comment || ''}","${e.classification || ''}","${e.who || ''}","${e.installments || 1}"`,
-    ),
+    headers.join(';'),
+    ...data.map((e) => {
+      const escapeStr = (str: any) => `"${String(str || '').replace(/"/g, '""')}"`
+      return [
+        escapeStr(e.date),
+        escapeStr(e.monthNum),
+        escapeStr(e.competency),
+        escapeStr(''),
+        escapeStr(e.establishment),
+        escapeStr(e.primaryCategory),
+        escapeStr(e.secondaryCategory),
+        escapeStr(e.type),
+        escapeStr(e.paymentMethod),
+        escapeStr(e.value.toFixed(2).replace('.', ',')),
+        escapeStr(e.comment),
+        escapeStr(e.classification),
+        escapeStr(e.who),
+        escapeStr(e.installments || 1),
+      ].join(';')
+    }),
   ].join('\n')
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob)
@@ -67,16 +84,16 @@ export function downloadImportTemplate() {
     '"Supermercado/Feira"',
     '"Variável"',
     '"Itaú"',
-    '"150.00"',
-    '"Compra de mês"',
+    '"150,00"',
+    '"Compra do mês"',
     '"Pessoal"',
     '"João"',
     '"1"',
   ]
 
-  const csvContent = headers.join(',') + '\n' + sampleData.join(',')
+  const csvContent = headers.join(';') + '\n' + sampleData.join(';')
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+  const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })
   const link = document.createElement('a')
   if (link.download !== undefined) {
     const url = URL.createObjectURL(blob)
