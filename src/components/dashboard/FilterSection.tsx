@@ -50,6 +50,12 @@ export function FilterSection() {
 
   const activeCategory = categories.find((c) => c.id === selectedPrimaryCat)
 
+  const availableYears = useMemo(() => {
+    const years = new Set(expenses.map((e) => e.date.split('-')[0]).filter(Boolean))
+    ;['2024', '2025', '2026', '2027', '2028'].forEach((y) => years.add(y))
+    return Array.from(years).sort()
+  }, [expenses])
+
   // Derive unique accounts grouped by type from historical data
   const accountsByType = useMemo(() => {
     const groups: Record<string, string[]> = {}
@@ -73,9 +79,11 @@ export function FilterSection() {
               <SelectValue placeholder="Ano" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="2024">2024</SelectItem>
-              <SelectItem value="2025">2025</SelectItem>
-              <SelectItem value="2026">2026</SelectItem>
+              {availableYears.map((y) => (
+                <SelectItem key={y} value={y}>
+                  {y}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 

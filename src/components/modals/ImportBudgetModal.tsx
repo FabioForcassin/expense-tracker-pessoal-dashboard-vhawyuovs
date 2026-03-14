@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -16,23 +16,66 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { UploadCloud, FileSpreadsheet } from 'lucide-react'
+import { UploadCloud, FileSpreadsheet, Download } from 'lucide-react'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Expense } from '@/types'
+import { downloadImportTemplate } from '@/lib/export'
 
 interface ImportDataModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
 }
 
+function parseDate(raw: string, defaultYear: string): string {
+  if (!raw) return `${defaultYear}-01-01`
+  const clean = raw.replace(/^"|"$/g, '').trim()
+  const brMatch = clean.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
+  if (brMatch) {
+    return `${brMatch[3]}-${brMatch[2].padStart(2, '0')}-${brMatch[1].padStart(2, '0')}`
+  }
+  const isoMatch = clean.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})$/)
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2].padStart(2, '0')}-${isoMatch[3].padStart(2, '0')}`
+  }
+  return clean
+}
+
+function parseValue(raw: string): number {
+  if (!raw) return 0
+  let clean = raw.replace(/^"|"$/g, '').trim()
+  clean = clean.replace(/[R$\s]/g, '')
+
+  const isNegative = clean.startsWith('-')
+  if (isNegative) clean = clean.substring(1)
+
+  if (clean.includes(',') && clean.includes('.')) {
+    if (clean.lastIndexOf(',') > clean.lastIndexOf('.')) {
+      clean = clean.replace(/\./g, '').replace(',', '.')
+    } else {
+      clean = clean.replace(/,/g, '')
+    }
+  } else if (clean.includes(',')) {
+    clean = clean.replace(',', '.')
+  }
+
+  const val = parseFloat(clean) || 0
+  return isNegative ? -val : val
+}
+
 export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
-  const { bulkImportData } = useDashboard()
+  const { bulkImportData, expenses } = useDashboard()
   const [files, setFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [importType, setImportType] = useState<'realizado' | 'orcamento'>('realizado')
   const [year, setYear] = useState('2024')
+
+  const availableYears = useMemo(() => {
+    const years = new Set(expenses.map((e) => e.date.split('-')[0]).filter(Boolean))
+    ;['2024', '2025', '2026', '2027', '2028'].forEach((y) => years.add(y))
+    return Array.from(years).sort()
+  }, [expenses])
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
@@ -67,30 +110,28 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
           for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim()
             if (!line) continue
-            // Support both comma and semicolon separators
+
             const separator = line.includes(';') ? ';' : ','
             const regex = new RegExp(`${separator}(?=(?:(?:[^"]*"){2})*[^"]*$)`)
             const cols = line.split(regex).map((s) => s.replace(/^"|"$/g, '').trim())
 
             if (cols.length >= 5) {
+              const formattedDate = parseDate(cols[0], year)
               parsedExpenses.push({
                 id: `imp_${file.name}_${Date.now()}_${i}`,
-                date: cols[0] || `${year}-01-01`,
-                monthNum: parseInt(cols[1]) || 1,
-                competency: cols[2] || 'Jan',
-                // Column E is index 4 - exactly as it appears
+                date: formattedDate,
+                monthNum: parseInt(cols[1]) || parseInt(formattedDate.split('-')[1], 10) || 1,
+                competency: cols[2] || '',
                 establishment: cols[4] || '',
                 primaryCategory: cols[5] || '',
                 secondaryCategory: cols[6] || '',
                 type: (cols[7] as any) || '',
                 paymentMethod: cols[8] || '',
-                value: parseFloat(cols[9]) || 0,
-                // Column K is index 10 - Comentário
+                value: parseValue(cols[9]),
                 comment: cols[10] || '',
-                // Column L is index 11 - Classificação
                 classification: cols[11] || '',
-                // Column M is index 12 - Quem
                 who: cols[12] || '',
+                installments: parseInt(cols[13]) || 1,
               })
             }
           }
@@ -98,12 +139,16 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
       }
 
       setTimeout(() => {
-        bulkImportData(importType, year, parsedExpenses.length > 0 ? parsedExpenses : undefined)
-        toast.success(`Lote de dados (${importType} - ${year}) importado com sucesso!`)
+        if (parsedExpenses.length > 0) {
+          bulkImportData(importType, year, parsedExpenses)
+          toast.success(`${parsedExpenses.length} registros importados com sucesso!`)
+        } else {
+          toast.warning('Nenhum registro compatível encontrado no arquivo.')
+        }
         setFiles([])
         setIsProcessing(false)
         onOpenChange(false)
-      }, 1000)
+      }, 800)
     } catch (e) {
       toast.error('Erro ao processar arquivo')
       setIsProcessing(false)
@@ -153,12 +198,25 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
                 <SelectValue placeholder="Ano" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="2024">2024</SelectItem>
-                <SelectItem value="2025">2025</SelectItem>
-                <SelectItem value="2026">2026</SelectItem>
+                {availableYears.map((y) => (
+                  <SelectItem key={y} value={y}>
+                    {y}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="flex justify-between items-center w-full mb-1 mt-2">
+          <Button
+            variant="outline"
+            onClick={downloadImportTemplate}
+            className="gap-2 text-primary border-primary/20 hover:bg-primary/10 w-full"
+          >
+            <Download className="w-4 h-4" />
+            Baixar Template de Importação
+          </Button>
         </div>
 
         <label

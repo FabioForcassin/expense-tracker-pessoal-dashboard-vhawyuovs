@@ -6,12 +6,13 @@ export interface Expense {
   establishment: string // e.g., 'bacio di latte'
   primaryCategory: string // Despesa e.g., 'Alimentação'
   secondaryCategory: string // Classificação e.g., 'Snacks'
-  type: 'Fixa' | 'Variável' | 'Receita'
+  type: 'Fixa' | 'Variável' | 'Receita' | string
   paymentMethod: string // Forma pgto e.g., 'CC nubank master'
   value: number // R$ Valor
   comment: string // Comentário
   classification: string // Pessoal/Empresa
   who: string // Quem
+  installments?: number // Parcelas
 }
 
 export type BudgetStore = Record<string, number> // Format: "categoryName|subcategoryName|YYYY-MM": value

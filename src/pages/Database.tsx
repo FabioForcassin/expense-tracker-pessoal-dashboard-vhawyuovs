@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useDashboard } from '@/stores/DashboardContext'
 import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -75,6 +75,12 @@ export default function Database() {
   const [localYear, setLocalYear] = useState('2024')
   const [isImportModalOpen, setImportModalOpen] = useState(false)
 
+  const availableYears = useMemo(() => {
+    const years = new Set(expenses.map((e) => e.date.split('-')[0]).filter(Boolean))
+    ;['2024', '2025', '2026', '2027', '2028'].forEach((y) => years.add(y))
+    return Array.from(years).sort()
+  }, [expenses])
+
   return (
     <div className="max-w-[1400px] mx-auto animate-fade-in flex flex-col gap-6 h-full pb-8">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -121,15 +127,17 @@ export default function Database() {
               automaticamente.
             </p>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-foreground">Ano Fical:</span>
+              <span className="text-sm font-medium text-foreground">Ano Fiscal:</span>
               <Select value={localYear} onValueChange={setLocalYear}>
                 <SelectTrigger className="w-[120px] h-9 bg-background">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="2024">2024</SelectItem>
-                  <SelectItem value="2025">2025</SelectItem>
-                  <SelectItem value="2026">2026</SelectItem>
+                  {availableYears.map((y) => (
+                    <SelectItem key={y} value={y}>
+                      {y}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
