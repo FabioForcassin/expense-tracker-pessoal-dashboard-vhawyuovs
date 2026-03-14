@@ -32,20 +32,34 @@ export default function AdminUsers() {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
-    setLoading(true)
 
-    const { error } = await inviteUser(email, role)
-
-    if (error) {
-      toast.error(`Erro ao convidar usuário: ${error.message || 'Falha na comunicação.'}`)
-    } else {
-      toast.success('Convite enviado com sucesso por e-mail!')
-      setEmail('')
-      setRole('user')
-      fetchProfiles()
+    if (!email) {
+      toast.error('Por favor, informe um e-mail válido.')
+      return
     }
 
-    setLoading(false)
+    setLoading(true)
+
+    try {
+      const { data, error } = await inviteUser(email, role)
+
+      if (error) {
+        toast.error(`Erro ao convidar: ${error.message}`)
+      } else {
+        if (data?.warning) {
+          toast.warning(`Atenção: ${data.warning}`)
+        } else {
+          toast.success('Convite enviado com sucesso por e-mail!')
+        }
+        setEmail('')
+        setRole('user')
+        await fetchProfiles()
+      }
+    } catch (err: any) {
+      toast.error(`Erro inesperado: ${err.message || 'Falha na comunicação.'}`)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
