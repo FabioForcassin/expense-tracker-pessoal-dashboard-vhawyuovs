@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import {
   Table,
@@ -11,13 +11,6 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -28,72 +21,24 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
-import { useDashboard } from '@/stores/DashboardContext'
+import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { ArrowDownRight, ArrowUpRight, Database, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export function DatabaseTransactionsTable() {
-  const { expenses, deleteExpenses } = useDashboard()
+  const { deleteExpenses } = useDashboard()
 
-  const [filterYear, setFilterYear] = useState('all')
-  const [filterMonth, setFilterMonth] = useState('all')
-  const [filterDay, setFilterDay] = useState('all')
-  const [filterCat, setFilterCat] = useState('all')
-  const [filterSub, setFilterSub] = useState('all')
-  const [filterPayment, setFilterPayment] = useState('all')
+  // Use globally filtered expenses
+  const filteredDataRaw = useFilteredExpenses(true)
+  const filteredData = [...filteredDataRaw].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  )
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
   const [itemToDelete, setItemToDelete] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-
-  const availableYears = useMemo(
-    () =>
-      Array.from(new Set(expenses.map((e) => e.date.split('-')[0])))
-        .filter(Boolean)
-        .sort(),
-    [expenses],
-  )
-  const availableMonths = Array.from({ length: 12 }, (_, i) => (i + 1).toString().padStart(2, '0'))
-  const availableDays = Array.from({ length: 31 }, (_, i) => (i + 1).toString().padStart(2, '0'))
-
-  const availableCategories = useMemo(
-    () =>
-      Array.from(new Set(expenses.map((e) => e.primaryCategory)))
-        .filter(Boolean)
-        .sort(),
-    [expenses],
-  )
-  const availableSubCategories = useMemo(() => {
-    let subs = expenses.map((e) => e.secondaryCategory).filter(Boolean)
-    if (filterCat !== 'all') {
-      subs = expenses
-        .filter((e) => e.primaryCategory === filterCat)
-        .map((e) => e.secondaryCategory)
-        .filter(Boolean)
-    }
-    return Array.from(new Set(subs)).sort()
-  }, [expenses, filterCat])
-  const availablePayments = useMemo(
-    () => Array.from(new Set(expenses.map((e) => e.paymentMethod).filter(Boolean))).sort(),
-    [expenses],
-  )
-
-  const filteredData = useMemo(() => {
-    return expenses
-      .filter((e) => {
-        const [y, m, d] = e.date.split('-')
-        if (filterYear !== 'all' && y !== filterYear) return false
-        if (filterMonth !== 'all' && m !== filterMonth) return false
-        if (filterDay !== 'all' && d !== filterDay) return false
-        if (filterCat !== 'all' && e.primaryCategory !== filterCat) return false
-        if (filterSub !== 'all' && e.secondaryCategory !== filterSub) return false
-        if (filterPayment !== 'all' && e.paymentMethod !== filterPayment) return false
-        return true
-      })
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-  }, [expenses, filterYear, filterMonth, filterDay, filterCat, filterSub, filterPayment])
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -139,15 +84,6 @@ export function DatabaseTransactionsTable() {
     }
   }
 
-  const clearFilters = () => {
-    setFilterYear('all')
-    setFilterMonth('all')
-    setFilterDay('all')
-    setFilterCat('all')
-    setFilterSub('all')
-    setFilterPayment('all')
-  }
-
   const netSubtotal = filteredData.reduce((acc, t) => {
     return acc + (t.primaryCategory === 'Receitas' ? t.value : -t.value)
   }, 0)
@@ -163,125 +99,23 @@ export function DatabaseTransactionsTable() {
             <Database className="w-5 h-5 text-primary" />
             Gerenciamento de Registros
           </CardTitle>
-          <div
-            className={`px-3 py-1.5 font-semibold text-sm rounded-md border ${netSubtotal >= 0 ? 'bg-success/10 text-success border-success/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}
-          >
-            Subtotal: {netSubtotal > 0 ? '+' : ''}
-            {formatCurrency(netSubtotal)}
+          <div className="flex items-center gap-4">
+            {selectedIds.length > 0 && (
+              <Button variant="destructive" size="sm" onClick={() => openDeleteDialog()}>
+                <Trash2 className="w-4 h-4 mr-2" />
+                Excluir ({selectedIds.length})
+              </Button>
+            )}
+            <div
+              className={`px-3 py-1.5 font-semibold text-sm rounded-md border ${netSubtotal >= 0 ? 'bg-success/10 text-success border-success/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}
+            >
+              Subtotal: {netSubtotal > 0 ? '+' : ''}
+              {formatCurrency(netSubtotal)}
+            </div>
           </div>
         </div>
       </CardHeader>
       <CardContent className="p-0 sm:p-6 sm:pt-4 overflow-x-auto flex flex-col gap-4">
-        {/* Filters */}
-        <div className="flex flex-col gap-3 bg-muted/20 p-4 rounded-lg border border-border/50">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-              Filtros Avançados
-            </h3>
-            {selectedIds.length > 0 && (
-              <Button variant="destructive" size="sm" onClick={() => openDeleteDialog()}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir Selecionados ({selectedIds.length})
-              </Button>
-            )}
-          </div>
-          <div className="flex flex-wrap items-center gap-3">
-            <Select value={filterYear} onValueChange={setFilterYear}>
-              <SelectTrigger className="w-[110px] h-8 bg-background">
-                <SelectValue placeholder="Ano" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Anos</SelectItem>
-                {availableYears.map((y) => (
-                  <SelectItem key={y} value={y}>
-                    {y}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterMonth} onValueChange={setFilterMonth}>
-              <SelectTrigger className="w-[120px] h-8 bg-background">
-                <SelectValue placeholder="Mês" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Meses</SelectItem>
-                {availableMonths.map((m) => (
-                  <SelectItem key={m} value={m}>
-                    {m}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterDay} onValueChange={setFilterDay}>
-              <SelectTrigger className="w-[110px] h-8 bg-background">
-                <SelectValue placeholder="Dia" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Dias</SelectItem>
-                {availableDays.map((d) => (
-                  <SelectItem key={d} value={d}>
-                    {d}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={filterCat}
-              onValueChange={(v) => {
-                setFilterCat(v)
-                setFilterSub('all')
-              }}
-            >
-              <SelectTrigger className="w-[150px] h-8 bg-background">
-                <SelectValue placeholder="Categoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas Categ.</SelectItem>
-                {availableCategories.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {c}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterSub} onValueChange={setFilterSub}>
-              <SelectTrigger className="w-[160px] h-8 bg-background">
-                <SelectValue placeholder="Subcategoria" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todas Subcat.</SelectItem>
-                {availableSubCategories.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={filterPayment} onValueChange={setFilterPayment}>
-              <SelectTrigger className="w-[160px] h-8 bg-background">
-                <SelectValue placeholder="Pgto/Conta" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos Pgtos.</SelectItem>
-                {availablePayments.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {p}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8">
-              Limpar Filtros
-            </Button>
-          </div>
-        </div>
-
         {/* Table */}
         <div className="border rounded-md shadow-sm overflow-hidden">
           <Table className="min-w-[900px] text-sm">

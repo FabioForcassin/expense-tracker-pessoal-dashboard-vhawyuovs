@@ -29,6 +29,22 @@ export interface AppCategory {
   subcategories: string[]
 }
 
+export interface DBCategory {
+  id: string
+  user_id: string
+  name: string
+  type: string
+  color: string
+  icon: string
+  subcategories?: DBSubcategory[]
+}
+
+export interface DBSubcategory {
+  id: string
+  category_id: string
+  name: string
+}
+
 export interface MonthlyData {
   month: string // YYYY-MM
   income: number

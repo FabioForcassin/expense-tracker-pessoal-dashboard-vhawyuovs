@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/select'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Filter, Layers, CalendarDays, CreditCard, ChevronDown } from 'lucide-react'
-import { getAccountType } from '@/types'
 
 const MONTHS = [
   { val: '01', label: 'Janeiro' },
@@ -30,6 +29,11 @@ const MONTHS = [
   { val: '12', label: 'Dezembro' },
 ]
 
+const DAYS = Array.from({ length: 31 }, (_, i) => ({
+  val: (i + 1).toString().padStart(2, '0'),
+  label: `Dia ${i + 1}`,
+}))
+
 export function FilterSection() {
   const {
     categories,
@@ -41,10 +45,10 @@ export function FilterSection() {
     setSelectedYear,
     selectedMonthValues,
     setSelectedMonthValues,
-    selectedAccountTypes,
-    toggleAccountType,
-    selectedAccounts,
-    toggleAccount,
+    selectedDays,
+    setSelectedDays,
+    selectedPaymentMethods,
+    togglePaymentMethod,
     expenses,
   } = useDashboard()
 
@@ -56,22 +60,14 @@ export function FilterSection() {
     return Array.from(years).sort()
   }, [expenses])
 
-  // Derive unique accounts grouped by type from historical data
-  const accountsByType = useMemo(() => {
-    const groups: Record<string, string[]> = {}
-    expenses.forEach((e) => {
-      if (!e.paymentMethod) return
-      const type = getAccountType(e.paymentMethod)
-      if (!groups[type]) groups[type] = []
-      if (!groups[type].includes(e.paymentMethod)) groups[type].push(e.paymentMethod)
-    })
-    return groups
+  const availablePayments = useMemo(() => {
+    return Array.from(new Set(expenses.map((e) => e.paymentMethod).filter(Boolean))).sort()
   }, [expenses])
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-        {/* Global Selectors: Year, Month, Accounts */}
+        {/* Global Selectors: Year, Month, Day, Accounts */}
         <div className="flex flex-wrap items-center gap-2 shrink-0 bg-background/50 p-1.5 rounded-lg border shadow-sm backdrop-blur-sm">
           {/* Year Standalone Dropdown */}
           <Select value={selectedYear} onValueChange={setSelectedYear}>
@@ -87,7 +83,7 @@ export function FilterSection() {
             </SelectContent>
           </Select>
 
-          {/* Month Standalone Dropdown */}
+          {/* Month Dropdown */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -98,7 +94,7 @@ export function FilterSection() {
                 <CalendarDays className="w-4 h-4 text-muted-foreground" />
                 <span>
                   {selectedMonthValues.length === 0
-                    ? 'Todos os Meses'
+                    ? 'Todos Meses'
                     : selectedMonthValues.length === 1
                       ? MONTHS.find((m) => m.val === selectedMonthValues[0])?.label
                       : `${selectedMonthValues.length} meses`}
@@ -135,7 +131,55 @@ export function FilterSection() {
             </PopoverContent>
           </Popover>
 
-          {/* Multi-layer Account Filter */}
+          {/* Day Dropdown */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-2 bg-background border-primary/20 text-foreground hover:bg-accent transition-all"
+              >
+                <CalendarDays className="w-4 h-4 text-muted-foreground" />
+                <span>
+                  {selectedDays.length === 0
+                    ? 'Todos Dias'
+                    : selectedDays.length === 1
+                      ? selectedDays[0]
+                      : `${selectedDays.length} dias`}
+                </span>
+                <ChevronDown className="w-3 h-3 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-2" align="start">
+              <p className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider">
+                Selecione os Dias
+              </p>
+              <ScrollArea className="h-[220px]">
+                <div className="flex flex-col gap-1">
+                  {DAYS.map((d) => (
+                    <label
+                      key={d.val}
+                      className="flex items-center gap-3 px-2 py-1.5 hover:bg-accent rounded-md cursor-pointer transition-colors"
+                    >
+                      <Checkbox
+                        checked={selectedDays.includes(d.val)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedDays([...selectedDays, d.val])
+                          } else {
+                            setSelectedDays(selectedDays.filter((x) => x !== d.val))
+                          }
+                        }}
+                      />
+                      <span className="text-sm font-medium">{d.label}</span>
+                    </label>
+                  ))}
+                </div>
+              </ScrollArea>
+            </PopoverContent>
+          </Popover>
+
+          {/* Payment Method Filter */}
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -144,44 +188,28 @@ export function FilterSection() {
                 className="h-8 gap-2 bg-background border-border text-foreground hover:bg-accent hover:text-accent-foreground transition-all"
               >
                 <CreditCard className="w-4 h-4 text-muted-foreground" />
-                <span>
-                  Contas/Pgto
-                  {(selectedAccountTypes.length > 0 || selectedAccounts.length > 0) && ' *'}
-                </span>
+                <span>Pgto/Conta {selectedPaymentMethods.length > 0 && ' *'}</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[280px] p-0" align="start">
               <div className="p-2 border-b bg-muted/20">
                 <p className="text-xs font-semibold text-muted-foreground px-2 uppercase tracking-wider mb-1">
-                  Filtro Multi-nível
+                  Filtro de Pagamento
                 </p>
               </div>
               <ScrollArea className="h-[300px]">
-                <div className="p-2 flex flex-col gap-3">
-                  {Object.entries(accountsByType).map(([type, accounts]) => (
-                    <div key={type} className="flex flex-col gap-1.5">
-                      <label className="flex items-center gap-2 px-2 py-1 bg-accent/50 rounded-md cursor-pointer">
-                        <Checkbox
-                          checked={selectedAccountTypes.includes(type)}
-                          onCheckedChange={() => toggleAccountType(type)}
-                        />
-                        <span className="text-sm font-semibold text-foreground">{type}</span>
-                      </label>
-                      <div className="flex flex-col gap-1 pl-6">
-                        {accounts.map((acc) => (
-                          <label
-                            key={acc}
-                            className="flex items-center gap-2 px-2 py-1 hover:bg-accent rounded-md cursor-pointer"
-                          >
-                            <Checkbox
-                              checked={selectedAccounts.includes(acc)}
-                              onCheckedChange={() => toggleAccount(acc)}
-                            />
-                            <span className="text-xs font-medium text-muted-foreground">{acc}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </div>
+                <div className="p-2 flex flex-col gap-1">
+                  {availablePayments.map((pm) => (
+                    <label
+                      key={pm}
+                      className="flex items-center gap-2 px-2 py-1 hover:bg-accent rounded-md cursor-pointer"
+                    >
+                      <Checkbox
+                        checked={selectedPaymentMethods.includes(pm)}
+                        onCheckedChange={() => togglePaymentMethod(pm)}
+                      />
+                      <span className="text-sm font-medium text-foreground">{pm}</span>
+                    </label>
                   ))}
                 </div>
               </ScrollArea>

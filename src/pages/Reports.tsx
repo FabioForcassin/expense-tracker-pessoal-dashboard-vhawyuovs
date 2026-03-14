@@ -1,5 +1,5 @@
 import { FilteredTransactionsTable } from '@/components/dashboard/FilteredTransactionsTable'
-import { FilterSection } from '@/components/dashboard/FilterSection'
+import { RealizedVsPredictedChart } from '@/components/reports/RealizedVsPredictedChart'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileSpreadsheet } from 'lucide-react'
@@ -26,11 +26,10 @@ export default function Reports() {
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
           <div>
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Histórico Completo
+              Relatórios e Histórico
             </h2>
             <p className="text-muted-foreground text-sm mt-1 mb-6">
-              Visualize e filtre todas as suas movimentações financeiras para extrair insights e
-              exportar os dados brutos.
+              Compare orçamentos e extraia insights com dados filtrados.
             </p>
           </div>
           <Button
@@ -41,14 +40,15 @@ export default function Reports() {
             Exportar Excel (CSV)
           </Button>
         </div>
-        <FilterSection />
       </div>
+
+      <RealizedVsPredictedChart />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6 mb-6">
         <Card className="glass overflow-hidden relative border-success/20">
           <CardContent className="p-6 relative z-10 flex flex-col items-center justify-center text-center">
             <h3 className="text-xs font-semibold tracking-tight text-success uppercase mb-2">
-              Total de Receitas
+              Total de Receitas (Filtro)
             </h3>
             <p className="text-2xl md:text-3xl font-bold tracking-tight text-success">
               +{formatCurrency(totalIncomes)}
@@ -59,7 +59,7 @@ export default function Reports() {
         <Card className="glass overflow-hidden relative border-destructive/20">
           <CardContent className="p-6 relative z-10 flex flex-col items-center justify-center text-center">
             <h3 className="text-xs font-semibold tracking-tight text-destructive uppercase mb-2">
-              Total de Despesas
+              Total de Despesas (Filtro)
             </h3>
             <p className="text-2xl md:text-3xl font-bold tracking-tight text-destructive">
               -{formatCurrency(totalExpenses)}

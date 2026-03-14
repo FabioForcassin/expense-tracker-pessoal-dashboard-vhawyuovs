@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode, useMemo, useEffect } from 'react'
-import { Expense, AppCategory, BudgetStore, getAccountType } from '@/types'
+import { Expense, AppCategory, BudgetStore, getAccountType, DBCategory } from '@/types'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -241,12 +241,15 @@ const generateInitialBudget = (): BudgetStore => {
 
 interface DashboardContextType {
   categories: AppCategory[]
+  customCategories: DBCategory[]
   expenses: Expense[]
   budget: BudgetStore
   selectedYear: string
   setSelectedYear: (y: string) => void
   selectedMonthValues: string[]
   setSelectedMonthValues: (m: string[]) => void
+  selectedDays: string[]
+  setSelectedDays: (d: string[]) => void
   selectedMonths: string[]
   selectedPrimaryCat: string | null
   setSelectedPrimaryCat: (id: string | null) => void
@@ -256,18 +259,25 @@ interface DashboardContextType {
   toggleAccountType: (type: string) => void
   selectedAccounts: string[]
   toggleAccount: (account: string) => void
+  selectedPaymentMethods: string[]
+  togglePaymentMethod: (pm: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => Promise<void>
   addExpenses: (e: Omit<Expense, 'id'>[]) => Promise<void>
   deleteExpenses: (ids: string[]) => Promise<void>
   updateBudget: (key: string, value: number) => void
   bulkImportData: (type: 'realizado' | 'orcamento', year: string, data?: Expense[]) => Promise<void>
+  resetDatabase: () => Promise<void>
+  addCategory: (name: string, type: string) => Promise<void>
+  deleteCategory: (id: string) => Promise<void>
+  addSubcategory: (categoryId: string, name: string) => Promise<void>
+  deleteSubcategory: (id: string) => Promise<void>
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth()
-  const [categories] = useState<AppCategory[]>(INITIAL_CATEGORIES)
+  const [customCategories, setCustomCategories] = useState<DBCategory[]>([])
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [budget, setBudget] = useState<BudgetStore>(generateInitialBudget())
 
@@ -275,12 +285,20 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [selectedMonthValues, setSelectedMonthValues] = useState<string[]>([
     (new Date().getMonth() + 1).toString().padStart(2, '0'),
   ])
+  const [selectedDays, setSelectedDays] = useState<string[]>([])
+  const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<string[]>([])
+  const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
+  const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
+  const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([])
+  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
 
   useEffect(() => {
     if (user) {
       fetchExpenses()
+      fetchCustomCategories()
     } else {
       setExpenses([])
+      setCustomCategories([])
     }
   }, [user])
 
@@ -312,14 +330,33 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setExpenses(mapped)
   }
 
+  const fetchCustomCategories = async () => {
+    if (!user) return
+    const { data, error } = await supabase
+      .from('categories' as any)
+      .select('*, subcategories(*)')
+      .eq('user_id', user.id)
+    if (error) {
+      console.error('Error fetching categories:', error)
+      return
+    }
+    setCustomCategories(data || [])
+  }
+
+  const categories = useMemo<AppCategory[]>(() => {
+    const custom = customCategories.map((c) => ({
+      id: c.id,
+      name: c.name,
+      color: c.color,
+      icon: c.icon,
+      subcategories: c.subcategories ? c.subcategories.map((s: any) => s.name) : [],
+    }))
+    return [...INITIAL_CATEGORIES, ...custom]
+  }, [customCategories])
+
   const selectedMonths = useMemo(() => {
     return selectedMonthValues.map((m) => `${selectedYear}-${m}`)
   }, [selectedYear, selectedMonthValues])
-
-  const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
-  const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
-  const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([])
-  const [selectedAccounts, setSelectedAccounts] = useState<string[]>([])
 
   const toggleSecondaryCat = (name: string) => {
     setSelectedSecondaryCats((prev) =>
@@ -341,6 +378,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const toggleAccount = (account: string) => {
     setSelectedAccounts((prev) =>
       prev.includes(account) ? prev.filter((a) => a !== account) : [...prev, account],
+    )
+  }
+
+  const togglePaymentMethod = (pm: string) => {
+    setSelectedPaymentMethods((prev) =>
+      prev.includes(pm) ? prev.filter((p) => p !== pm) : [...prev, pm],
     )
   }
 
@@ -404,6 +447,75 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setExpenses((prev) => prev.filter((e) => !ids.includes(e.id)))
   }
 
+  const resetDatabase = async () => {
+    if (!user) return
+    const { error } = await supabase
+      .from('expenses' as any)
+      .delete()
+      .eq('user_id', user.id)
+    if (error) {
+      console.error('Error resetting database:', error)
+      throw error
+    }
+    setExpenses([])
+  }
+
+  const addCategory = async (name: string, type: string) => {
+    if (!user) return
+    const payload = {
+      user_id: user.id,
+      name,
+      type,
+      color: type === 'Receita' ? 'hsl(160 84% 39%)' : 'hsl(220 70% 50%)',
+    }
+    const { data, error } = await supabase
+      .from('categories' as any)
+      .insert(payload)
+      .select()
+    if (!error && data) {
+      setCustomCategories((prev) => [...prev, { ...data[0], subcategories: [] }])
+    }
+  }
+
+  const deleteCategory = async (id: string) => {
+    const { error } = await supabase
+      .from('categories' as any)
+      .delete()
+      .eq('id', id)
+    if (!error) {
+      setCustomCategories((prev) => prev.filter((c) => c.id !== id))
+    }
+  }
+
+  const addSubcategory = async (categoryId: string, name: string) => {
+    const { data, error } = await supabase
+      .from('subcategories' as any)
+      .insert({ category_id: categoryId, name })
+      .select()
+    if (!error && data) {
+      setCustomCategories((prev) =>
+        prev.map((c) =>
+          c.id === categoryId ? { ...c, subcategories: [...(c.subcategories || []), data[0]] } : c,
+        ),
+      )
+    }
+  }
+
+  const deleteSubcategory = async (id: string) => {
+    const { error } = await supabase
+      .from('subcategories' as any)
+      .delete()
+      .eq('id', id)
+    if (!error) {
+      setCustomCategories((prev) =>
+        prev.map((c) => ({
+          ...c,
+          subcategories: (c.subcategories || []).filter((s: any) => s.id !== id),
+        })),
+      )
+    }
+  }
+
   const updateBudget = (key: string, value: number) => {
     setBudget((prev) => ({ ...prev, [key]: value }))
   }
@@ -416,58 +528,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     if (type === 'realizado') {
       if (!user) return
       let itemsToInsert = parsedData || []
-
-      if (!parsedData || parsedData.length === 0) {
-        const generated: Omit<Expense, 'id'>[] = []
-        const numExpenses = 120
-        const methods = ['Itaú', 'Nubank', 'CC Itaú visa infinity', 'Santander', 'Dinheiro']
-        const establishments = [
-          'Supermercado Extra',
-          'Posto Ipiranga',
-          'Farmácia Drogasil',
-          'Restaurante do João',
-          'Padaria Pão Quente',
-          'Cinema Kinoplex',
-          'Amazon',
-          'Mercado Livre',
-          'Uber',
-          'Ifood',
-        ]
-
-        for (let i = 0; i < numExpenses; i++) {
-          const m = Math.floor(Math.random() * 12) + 1
-          const d = Math.floor(Math.random() * 28) + 1
-          const date = `${year}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`
-          const isReceita = Math.random() > 0.85
-
-          let cat = categories.find((c) => c.name === 'Receitas')!
-          if (!isReceita) {
-            const expCats = categories.filter((c) => c.name !== 'Receitas')
-            cat = expCats[Math.floor(Math.random() * expCats.length)]
-          }
-          const sub = cat.subcategories[Math.floor(Math.random() * cat.subcategories.length)]
-          const val = isReceita ? Math.random() * 8000 + 2000 : Math.random() * 600 + 20
-
-          generated.push({
-            date,
-            monthNum: m,
-            competency: m.toString().padStart(2, '0'),
-            establishment: isReceita
-              ? 'Cliente/Empresa'
-              : establishments[Math.floor(Math.random() * establishments.length)],
-            primaryCategory: cat.name,
-            secondaryCategory: sub,
-            type: isReceita ? 'Receita' : Math.random() > 0.5 ? 'Fixa' : 'Variável',
-            paymentMethod: methods[Math.floor(Math.random() * methods.length)],
-            value: parseFloat(val.toFixed(2)),
-            comment: '',
-            classification: Math.random() > 0.8 ? 'Empresa' : 'Pessoal',
-            who: 'Usuário',
-          })
-        }
-        itemsToInsert = generated as Expense[]
-      }
-
       await addExpenses(itemsToInsert)
     } else {
       const newBudget = { ...budget }
@@ -484,12 +544,15 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     <DashboardContext.Provider
       value={{
         categories,
+        customCategories,
         expenses,
         budget,
         selectedYear,
         setSelectedYear,
         selectedMonthValues,
         setSelectedMonthValues,
+        selectedDays,
+        setSelectedDays,
         selectedMonths,
         selectedPrimaryCat,
         setSelectedPrimaryCat: handleSetPrimaryCat,
@@ -499,11 +562,18 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         toggleAccountType,
         selectedAccounts,
         toggleAccount,
+        selectedPaymentMethods,
+        togglePaymentMethod,
         addExpense,
         addExpenses,
         deleteExpenses,
         updateBudget,
         bulkImportData,
+        resetDatabase,
+        addCategory,
+        deleteCategory,
+        addSubcategory,
+        deleteSubcategory,
       }}
     >
       {children}
@@ -517,7 +587,7 @@ export function useDashboard() {
   return context
 }
 
-export function useFilteredExpenses(applyMonthFilter = true) {
+export function useFilteredExpenses(applyTimeFilters = true) {
   const context = useContext(DashboardContext)
   if (!context) throw new Error('useFilteredExpenses must be used within DashboardProvider')
 
@@ -525,20 +595,28 @@ export function useFilteredExpenses(applyMonthFilter = true) {
     expenses,
     selectedMonths,
     selectedYear,
+    selectedDays,
     selectedPrimaryCat,
     selectedSecondaryCats,
     selectedAccountTypes,
     selectedAccounts,
+    selectedPaymentMethods,
     categories,
   } = context
 
   let filtered = expenses
 
-  if (applyMonthFilter) {
+  if (applyTimeFilters) {
     if (selectedMonths.length > 0) {
       filtered = filtered.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
     } else if (selectedYear) {
       filtered = filtered.filter((e) => e.date.startsWith(selectedYear))
+    }
+    if (selectedDays.length > 0) {
+      filtered = filtered.filter((e) => {
+        const d = e.date.split('-')[2]
+        return selectedDays.includes(d)
+      })
     }
   }
 
@@ -562,6 +640,10 @@ export function useFilteredExpenses(applyMonthFilter = true) {
         selectedAccounts.length === 0 || selectedAccounts.includes(e.paymentMethod)
       return matchesType && matchesAccount
     })
+  }
+
+  if (selectedPaymentMethods.length > 0) {
+    filtered = filtered.filter((e) => selectedPaymentMethods.includes(e.paymentMethod))
   }
 
   return filtered

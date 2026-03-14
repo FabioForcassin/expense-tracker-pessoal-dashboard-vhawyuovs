@@ -217,7 +217,7 @@ export function AddExpenseModal({
               />
             </div>
             <div className="grid gap-2">
-              <Label>Data</Label>
+              <Label>Data (Primeira Parcela)</Label>
               <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
             </div>
           </div>
@@ -320,7 +320,7 @@ export function AddExpenseModal({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+                    {Array.from({ length: 48 }, (_, i) => i + 1).map((n) => (
                       <SelectItem key={n} value={n.toString()}>
                         {n}x
                       </SelectItem>
