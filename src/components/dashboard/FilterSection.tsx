@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useDashboard } from '@/stores/DashboardContext'
-import { Filter, Layers, CalendarDays, CreditCard, ChevronDown } from 'lucide-react'
+import { Filter, Layers, CalendarDays, CreditCard, ChevronDown, FilterX } from 'lucide-react'
 
 const MONTHS = [
   { val: '01', label: 'Janeiro' },
@@ -51,6 +51,7 @@ export function FilterSection() {
     togglePaymentMethod,
     expenses,
     dbPaymentMethods,
+    clearFilters,
   } = useDashboard()
 
   const activeCategory = categories.find((c) => c.id === selectedPrimaryCat)
@@ -107,12 +108,23 @@ export function FilterSection() {
                 <ChevronDown className="w-3 h-3 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-2" align="start">
-              <p className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider">
-                Selecione os Meses
-              </p>
+            <PopoverContent className="w-[200px] p-0" align="start">
+              <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0">
+                  Meses
+                </p>
+                <button
+                  onClick={() => {
+                    if (selectedMonthValues.length === MONTHS.length) setSelectedMonthValues([])
+                    else setSelectedMonthValues(MONTHS.map((m) => m.val))
+                  }}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {selectedMonthValues.length === MONTHS.length ? 'Desmarcar' : 'Todos'}
+                </button>
+              </div>
               <ScrollArea className="h-[220px]">
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 p-2">
                   {MONTHS.map((m) => (
                     <label
                       key={m.val}
@@ -155,12 +167,23 @@ export function FilterSection() {
                 <ChevronDown className="w-3 h-3 opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[200px] p-2" align="start">
-              <p className="text-xs font-semibold text-muted-foreground mb-2 px-2 uppercase tracking-wider">
-                Selecione os Dias
-              </p>
+            <PopoverContent className="w-[200px] p-0" align="start">
+              <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0">
+                  Dias
+                </p>
+                <button
+                  onClick={() => {
+                    if (selectedDays.length === DAYS.length) setSelectedDays([])
+                    else setSelectedDays(DAYS.map((d) => d.val))
+                  }}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {selectedDays.length === DAYS.length ? 'Desmarcar' : 'Todos'}
+                </button>
+              </div>
               <ScrollArea className="h-[220px]">
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 p-2">
                   {DAYS.map((d) => (
                     <label
                       key={d.val}
@@ -197,10 +220,22 @@ export function FilterSection() {
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[280px] p-0" align="start">
-              <div className="p-2 border-b bg-muted/20">
-                <p className="text-xs font-semibold text-muted-foreground px-2 uppercase tracking-wider mb-1">
-                  Filtro de Pagamento
+              <div className="p-2 border-b bg-muted/20 flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-0">
+                  Pgto/Conta
                 </p>
+                <button
+                  onClick={() => {
+                    if (selectedPaymentMethods.length === availablePayments.length)
+                      setSelectedPaymentMethods([])
+                    else setSelectedPaymentMethods(availablePayments)
+                  }}
+                  className="text-xs font-medium text-primary hover:underline"
+                >
+                  {selectedPaymentMethods.length === availablePayments.length
+                    ? 'Desmarcar'
+                    : 'Todos'}
+                </button>
               </div>
               <ScrollArea className="h-[300px]">
                 <div className="p-2 flex flex-col gap-1">
@@ -220,6 +255,19 @@ export function FilterSection() {
               </ScrollArea>
             </PopoverContent>
           </Popover>
+
+          {/* Clear Filters Button */}
+          <div className="ml-1 border-l pl-2 border-border/50 hidden sm:block">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="h-8 text-muted-foreground hover:text-foreground"
+            >
+              <FilterX className="w-4 h-4 mr-1.5" />
+              Limpar
+            </Button>
+          </div>
         </div>
 
         {/* Category Filters */}
@@ -260,6 +308,25 @@ export function FilterSection() {
           <Layers className="w-4 h-4 text-primary shrink-0" />
           <ScrollArea className="w-full max-w-full whitespace-nowrap">
             <div className="flex w-max space-x-2 p-1">
+              <Badge
+                variant="outline"
+                className="cursor-pointer px-3 py-1 text-xs transition-all border-dashed hover:bg-accent"
+                onClick={() => {
+                  if (selectedSecondaryCats.length === activeCategory.subcategories.length) {
+                    activeCategory.subcategories.forEach((sub) => {
+                      if (selectedSecondaryCats.includes(sub)) toggleSecondaryCat(sub)
+                    })
+                  } else {
+                    activeCategory.subcategories.forEach((sub) => {
+                      if (!selectedSecondaryCats.includes(sub)) toggleSecondaryCat(sub)
+                    })
+                  }
+                }}
+              >
+                {selectedSecondaryCats.length === activeCategory.subcategories.length
+                  ? 'Desmarcar Todos'
+                  : 'Selecionar Todos'}
+              </Badge>
               {activeCategory.subcategories.map((sub) => {
                 const isSelected = selectedSecondaryCats.includes(sub)
                 const isIncome = activeCategory.name === 'Receitas'

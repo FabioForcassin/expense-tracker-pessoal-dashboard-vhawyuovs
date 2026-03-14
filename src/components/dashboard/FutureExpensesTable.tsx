@@ -15,7 +15,7 @@ import { ArrowDownRight, ArrowUpRight, CalendarClock } from 'lucide-react'
 import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 
 export function FutureExpensesTable({ full = false }: { full?: boolean }) {
-  const filteredExpenses = useFilteredExpenses(true)
+  const filteredExpenses = useFilteredExpenses(false)
 
   const finalData = useMemo(() => {
     const d = new Date()

@@ -54,6 +54,7 @@ export interface DBGoal {
   month: number
   year: number
   amount: number
+  challenge_amount?: number
 }
 
 export interface DBPaymentMethod {

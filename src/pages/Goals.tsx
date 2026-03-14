@@ -2,41 +2,95 @@ import { useState } from 'react'
 import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/progress'
-import { Target, TrendingUp, AlertTriangle } from 'lucide-react'
+import { Target, Info } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table'
+import { DBGoal } from '@/types'
 
-export default function Goals() {
-  const { goals, upsertGoal } = useDashboard()
-  const allExpenses = useFilteredExpenses(false)
+const MONTH_NAMES = [
+  'Janeiro',
+  'Fevereiro',
+  'Março',
+  'Abril',
+  'Maio',
+  'Junho',
+  'Julho',
+  'Agosto',
+  'Setembro',
+  'Outubro',
+  'Novembro',
+  'Dezembro',
+]
 
-  const d = new Date()
-  const currentMonth = d.getMonth() + 1
-  const currentYear = d.getFullYear()
+function GoalRow({
+  monthNum,
+  year,
+  spent,
+  goal,
+}: {
+  monthNum: number
+  year: number
+  spent: number
+  goal: DBGoal | undefined
+}) {
+  const { upsertGoal } = useDashboard()
+  const [meta, setMeta] = useState(goal?.amount?.toString() || '')
+  const [desafio, setDesafio] = useState(goal?.challenge_amount?.toString() || '')
 
-  const [month] = useState(currentMonth)
-  const [year] = useState(currentYear)
-  const [amountStr, setAmountStr] = useState('')
+  const handleBlur = () => {
+    const mVal = parseFloat(meta) || 0
+    const dVal = parseFloat(desafio) || 0
 
-  const goal = goals.find((g) => g.month === month && g.year === year)
-
-  const monthStr = `${year}-${String(month).padStart(2, '0')}`
-  const spent = allExpenses
-    .filter((e) => e.date.startsWith(monthStr) && e.primaryCategory !== 'Receitas')
-    .reduce((a, b) => a + b.value, 0)
-
-  const limit = goal ? goal.amount : 0
-  const remaining = limit - spent
-  const progress = limit > 0 ? Math.min((spent / limit) * 100, 100) : 0
-
-  const handleSave = () => {
-    const val = parseFloat(amountStr)
-    if (!isNaN(val) && val > 0) {
-      upsertGoal(month, year, val)
-      setAmountStr('')
+    if (mVal !== (goal?.amount || 0) || dVal !== (goal?.challenge_amount || 0)) {
+      upsertGoal(monthNum, year, mVal, dVal)
     }
   }
+
+  const isOverGoal = goal?.amount && spent > goal.amount
+
+  return (
+    <TableRow className="hover:bg-muted/30">
+      <TableCell className="font-medium">{MONTH_NAMES[monthNum - 1]}</TableCell>
+      <TableCell className={`font-semibold ${isOverGoal ? 'text-destructive' : 'text-foreground'}`}>
+        {formatCurrency(spent)}
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          placeholder="Ex: 5000"
+          value={meta}
+          onChange={(e) => setMeta(e.target.value)}
+          onBlur={handleBlur}
+          className="w-full sm:w-32 bg-background"
+        />
+      </TableCell>
+      <TableCell>
+        <Input
+          type="number"
+          placeholder="Ex: 4000"
+          value={desafio}
+          onChange={(e) => setDesafio(e.target.value)}
+          onBlur={handleBlur}
+          className="w-full sm:w-32 bg-background border-dashed border-primary/50 focus-visible:ring-primary/50"
+        />
+      </TableCell>
+    </TableRow>
+  )
+}
+
+export default function Goals() {
+  const { goals, selectedYear } = useDashboard()
+  const allExpenses = useFilteredExpenses(false)
+
+  const year = parseInt(selectedYear) || new Date().getFullYear()
+  const months = Array.from({ length: 12 }, (_, i) => i + 1)
 
   return (
     <div className="max-w-[1400px] w-full mx-auto flex flex-col gap-6 animate-fade-in pb-8">
@@ -45,92 +99,57 @@ export default function Goals() {
           <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
             <Target className="w-6 h-6" />
           </div>
-          Progresso de Metas
+          Metas e Desafios {year}
         </h2>
-        <p className="text-muted-foreground text-sm mt-2">
-          Defina limites de gastos mensais e acompanhe seu saldo disponível.
+        <p className="text-muted-foreground text-sm mt-2 flex items-center gap-1.5">
+          <Info className="w-4 h-4 opacity-70" />
+          Defina suas metas mensais e desafios de economia. As alterações são salvas automaticamente
+          ao sair do campo.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="glass md:col-span-1 border-primary/20 h-fit">
-          <CardHeader>
-            <CardTitle className="text-lg">Definir Limite</CardTitle>
-            <CardDescription>Mês Atual ({monthStr})</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Orçamento Máximo (R$)</label>
-              <Input
-                type="number"
-                placeholder={limit > 0 ? limit.toString() : 'Ex: 5000'}
-                value={amountStr}
-                onChange={(e) => setAmountStr(e.target.value)}
-              />
-            </div>
-            <Button onClick={handleSave} className="w-full" disabled={!amountStr}>
-              Salvar Meta
-            </Button>
-          </CardContent>
-        </Card>
+      <Card className="glass overflow-hidden shadow-sm">
+        <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
+          <CardTitle className="text-lg font-bold">Acompanhamento Anual</CardTitle>
+          <CardDescription>
+            O "Orçamento/Realizado" reflete a soma consolidada de todas as despesas do mês
+            correspondente.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0 overflow-x-auto">
+          <Table className="min-w-[600px]">
+            <TableHeader className="bg-muted/10">
+              <TableRow>
+                <TableHead className="w-[150px]">Mês</TableHead>
+                <TableHead>Orçamento / Realizado</TableHead>
+                <TableHead>Meta (R$)</TableHead>
+                <TableHead>Desafio (R$)</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {months.map((monthNum) => {
+                const monthStr = `${year}-${String(monthNum).padStart(2, '0')}`
 
-        <Card className="glass md:col-span-2">
-          <CardHeader>
-            <CardTitle className="text-lg">Acompanhamento</CardTitle>
-            <CardDescription>Progresso do orçamento definido</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {limit === 0 ? (
-              <div className="h-32 flex flex-col items-center justify-center text-muted-foreground gap-2">
-                <AlertTriangle className="w-8 h-8 opacity-50" />
-                <p>Nenhuma meta definida para este mês.</p>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-sm text-muted-foreground font-medium mb-1">Gasto Atual</p>
-                    <p className="text-3xl font-bold text-foreground">{formatCurrency(spent)}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-muted-foreground font-medium mb-1">Limite</p>
-                    <p className="text-xl font-semibold text-muted-foreground">
-                      {formatCurrency(limit)}
-                    </p>
-                  </div>
-                </div>
+                const spent = allExpenses
+                  .filter((e) => e.date.startsWith(monthStr) && e.primaryCategory !== 'Receitas')
+                  .reduce((a, b) => a + b.value, 0)
 
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm font-medium">
-                    <span className={progress >= 100 ? 'text-destructive' : 'text-primary'}>
-                      {progress.toFixed(1)}% utilizado
-                    </span>
-                  </div>
-                  <Progress
-                    value={progress}
-                    className={`h-3 ${progress >= 100 ? '[&>div]:bg-destructive bg-destructive/20' : ''}`}
+                const goal = goals.find((g) => g.month === monthNum && g.year === year)
+
+                return (
+                  <GoalRow
+                    key={monthNum}
+                    monthNum={monthNum}
+                    year={year}
+                    spent={spent}
+                    goal={goal}
                   />
-                </div>
-
-                <div
-                  className={`p-4 rounded-lg border flex items-center justify-between ${remaining >= 0 ? 'bg-success/10 border-success/20 text-success' : 'bg-destructive/10 border-destructive/20 text-destructive'}`}
-                >
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5" />
-                    <span className="font-semibold">
-                      {remaining >= 0 ? 'Saldo Restante' : 'Orçamento Estourado'}
-                    </span>
-                  </div>
-                  <span className="text-xl font-bold">
-                    {remaining > 0 ? '+' : ''}
-                    {formatCurrency(remaining)}
-                  </span>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                )
+              })}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 }

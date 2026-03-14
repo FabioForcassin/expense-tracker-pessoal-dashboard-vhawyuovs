@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/table'
 
 export default function Predictability() {
-  const expenses = useFilteredExpenses(true).filter((e) => e.primaryCategory !== 'Receitas')
+  const expenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
   const d = new Date()
   const lastDayOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0)
   const lastDayStr = `${lastDayOfMonth.getFullYear()}-${(lastDayOfMonth.getMonth() + 1).toString().padStart(2, '0')}-${lastDayOfMonth.getDate().toString().padStart(2, '0')}`

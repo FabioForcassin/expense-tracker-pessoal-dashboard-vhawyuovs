@@ -271,6 +271,7 @@ interface DashboardContextType {
   toggleAccount: (account: string) => void
   selectedPaymentMethods: string[]
   togglePaymentMethod: (pm: string) => void
+  clearFilters: () => void
   addExpense: (e: Omit<Expense, 'id'>) => Promise<void>
   addExpenses: (e: Omit<Expense, 'id'>[]) => Promise<void>
   deleteExpenses: (ids: string[]) => Promise<void>
@@ -281,7 +282,12 @@ interface DashboardContextType {
   deleteCategory: (id: string) => Promise<void>
   addSubcategory: (categoryId: string, name: string) => Promise<void>
   deleteSubcategory: (id: string) => Promise<void>
-  upsertGoal: (month: number, year: number, amount: number) => Promise<void>
+  upsertGoal: (
+    month: number,
+    year: number,
+    amount: number,
+    challenge_amount?: number,
+  ) => Promise<void>
   addPaymentMethod: (name: string, type: string) => Promise<void>
   deletePaymentMethod: (id: string) => Promise<void>
 }
@@ -296,7 +302,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [goals, setGoals] = useState<DBGoal[]>([])
   const [dbPaymentMethods, setDbPaymentMethods] = useState<DBPaymentMethod[]>([])
 
-  const [selectedYear, setSelectedYear] = useState<string>('2026')
+  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString())
   const [selectedMonthValues, setSelectedMonthValues] = useState<string[]>([
     (new Date().getMonth() + 1).toString().padStart(2, '0'),
   ])
@@ -401,6 +407,17 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const selectedMonths = useMemo(() => {
     return selectedMonthValues.map((m) => `${selectedYear}-${m}`)
   }, [selectedYear, selectedMonthValues])
+
+  const clearFilters = () => {
+    setSelectedYear(new Date().getFullYear().toString())
+    setSelectedMonthValues([(new Date().getMonth() + 1).toString().padStart(2, '0')])
+    setSelectedDays([])
+    setSelectedPaymentMethods([])
+    setSelectedPrimaryCat(null)
+    setSelectedSecondaryCats([])
+    setSelectedAccountTypes([])
+    setSelectedAccounts([])
+  }
 
   const toggleSecondaryCat = (name: string) => {
     setSelectedSecondaryCats((prev) =>
@@ -590,13 +607,18 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  const upsertGoal = async (month: number, year: number, amount: number) => {
+  const upsertGoal = async (
+    month: number,
+    year: number,
+    amount: number,
+    challenge_amount: number = 0,
+  ) => {
     if (!user) return
     const existing = goals.find((g) => g.month === month && g.year === year)
     if (existing) {
       const { error, data } = await supabase
         .from('goals' as any)
-        .update({ amount })
+        .update({ amount, challenge_amount })
         .eq('id', existing.id)
         .select()
       if (!error && data) {
@@ -605,7 +627,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     } else {
       const { error, data } = await supabase
         .from('goals' as any)
-        .insert({ user_id: user.id, month, year, amount })
+        .insert({ user_id: user.id, month, year, amount, challenge_amount })
         .select()
       if (!error && data) {
         setGoals((prev) => [...prev, data[0]])
@@ -660,6 +682,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         toggleAccount,
         selectedPaymentMethods,
         togglePaymentMethod,
+        clearFilters,
         addExpense,
         addExpenses,
         deleteExpenses,

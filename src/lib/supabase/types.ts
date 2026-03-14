@@ -47,12 +47,15 @@ export type Database = {
           comment: string | null
           competency: string | null
           created_at: string
+          current_installment: number | null
           date: string
           description: string
           id: string
+          is_installment: boolean | null
           month_num: number | null
           payment_method: string | null
           secondary_category: string | null
+          total_installments: number | null
           type: string | null
           user_id: string
           who: string | null
@@ -64,12 +67,15 @@ export type Database = {
           comment?: string | null
           competency?: string | null
           created_at?: string
+          current_installment?: number | null
           date: string
           description: string
           id?: string
+          is_installment?: boolean | null
           month_num?: number | null
           payment_method?: string | null
           secondary_category?: string | null
+          total_installments?: number | null
           type?: string | null
           user_id: string
           who?: string | null
@@ -81,15 +87,69 @@ export type Database = {
           comment?: string | null
           competency?: string | null
           created_at?: string
+          current_installment?: number | null
           date?: string
           description?: string
           id?: string
+          is_installment?: boolean | null
           month_num?: number | null
           payment_method?: string | null
           secondary_category?: string | null
+          total_installments?: number | null
           type?: string | null
           user_id?: string
           who?: string | null
+        }
+        Relationships: []
+      }
+      goals: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          month: number
+          user_id: string
+          year: number
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          month?: number
+          user_id?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      payment_methods: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -293,6 +353,22 @@ export const Constants = {
 //   month_num: integer (nullable)
 //   competency: text (nullable)
 //   created_at: timestamp with time zone (not null, default: now())
+//   is_installment: boolean (nullable, default: false)
+//   current_installment: integer (nullable)
+//   total_installments: integer (nullable)
+// Table: goals
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   month: integer (not null)
+//   year: integer (not null)
+//   amount: numeric (not null)
+//   created_at: timestamp with time zone (not null, default: now())
+// Table: payment_methods
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   name: text (not null)
+//   type: text (not null)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: subcategories
 //   id: uuid (not null, default: gen_random_uuid())
 //   category_id: uuid (not null)
@@ -306,6 +382,13 @@ export const Constants = {
 // Table: expenses
 //   PRIMARY KEY expenses_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY expenses_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+// Table: goals
+//   PRIMARY KEY goals_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY goals_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+//   UNIQUE goals_user_id_month_year_key: UNIQUE (user_id, month, year)
+// Table: payment_methods
+//   PRIMARY KEY payment_methods_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY payment_methods_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 // Table: subcategories
 //   FOREIGN KEY subcategories_category_id_fkey: FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 //   PRIMARY KEY subcategories_pkey: PRIMARY KEY (id)
@@ -322,6 +405,12 @@ export const Constants = {
 //   Policy "Users can update their own expenses" (UPDATE, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = user_id)
 //   Policy "Users can view their own expenses" (SELECT, PERMISSIVE) roles={public}
+//     USING: (auth.uid() = user_id)
+// Table: goals
+//   Policy "Users can manage their own goals" (ALL, PERMISSIVE) roles={public}
+//     USING: (auth.uid() = user_id)
+// Table: payment_methods
+//   Policy "Users can manage their own payment methods" (ALL, PERMISSIVE) roles={public}
 //     USING: (auth.uid() = user_id)
 // Table: subcategories
 //   Policy "Users can manage their own subcategories" (ALL, PERMISSIVE) roles={public}
@@ -359,3 +448,7 @@ export const Constants = {
 //   END;
 //   $function$
 //
+
+// --- INDEXES ---
+// Table: goals
+//   CREATE UNIQUE INDEX goals_user_id_month_year_key ON public.goals USING btree (user_id, month, year)

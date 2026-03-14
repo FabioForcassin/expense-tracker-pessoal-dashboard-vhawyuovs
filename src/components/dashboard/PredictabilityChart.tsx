@@ -43,7 +43,7 @@ const monthNames: Record<string, string> = {
 }
 
 export function PredictabilityChart() {
-  const expenses = useFilteredExpenses(true)
+  const expenses = useFilteredExpenses(false)
 
   const now = new Date()
   const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0)
