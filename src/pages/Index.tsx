@@ -4,8 +4,11 @@ import { KPICards } from '@/components/dashboard/KPICards'
 import { CumulativeSpendingChart } from '@/components/dashboard/CumulativeSpendingChart'
 import { CategoryDistributionChart } from '@/components/dashboard/CategoryDistributionChart'
 import { MoMChart } from '@/components/dashboard/MoMChart'
+import { TrendChart } from '@/components/dashboard/TrendChart'
+import { YearlyHistoryChart } from '@/components/dashboard/YearlyHistoryChart'
 import { TopExpensesList } from '@/components/dashboard/TopExpensesList'
 import { TransactionsTable } from '@/components/dashboard/TransactionsTable'
+import { InsightsSection } from '@/components/dashboard/InsightsSection'
 
 export default function Index() {
   return (
@@ -23,10 +26,17 @@ export default function Index() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-2">
         <MoMChart />
-        <CategoryDistributionChart />
+        <TrendChart />
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 mb-6">
+        <CategoryDistributionChart />
+        <YearlyHistoryChart />
+      </div>
+
+      <InsightsSection />
 
       <TransactionsTable />
     </div>

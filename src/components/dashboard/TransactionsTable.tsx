@@ -8,29 +8,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { useDashboard } from '@/stores/DashboardContext'
+import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
 import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 
 export function TransactionsTable({ full = false }: { full?: boolean }) {
-  const { expenses, selectedMonths, selectedPrimaryCat, selectedSecondaryCats, categories } =
-    useDashboard()
+  const filteredTransactions = useFilteredExpenses(true)
 
-  let filteredTransactions = expenses.filter((e) =>
-    selectedMonths.some((m) => e.date.startsWith(m)),
-  )
-
-  if (selectedPrimaryCat) {
-    const cat = categories.find((c) => c.id === selectedPrimaryCat)
-    filteredTransactions = filteredTransactions.filter((e) => e.primaryCategory === cat?.name)
-    if (selectedSecondaryCats.length > 0) {
-      filteredTransactions = filteredTransactions.filter((e) =>
-        selectedSecondaryCats.includes(e.secondaryCategory),
-      )
-    }
-  }
-
-  const displayData = filteredTransactions.sort(
+  const displayData = [...filteredTransactions].sort(
     (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
   )
   const finalData = full ? displayData : displayData.slice(0, 8)

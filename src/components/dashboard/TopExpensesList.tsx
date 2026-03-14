@@ -1,27 +1,11 @@
-import { useDashboard } from '@/stores/DashboardContext'
+import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { formatCurrency } from '@/lib/format'
 import { Trophy } from 'lucide-react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 
 export function TopExpensesList() {
-  const { expenses, selectedMonths, selectedPrimaryCat, selectedSecondaryCats, categories } =
-    useDashboard()
-
-  let filteredExpenses = expenses.filter(
-    (e) => selectedMonths.some((m) => e.date.startsWith(m)) && e.primaryCategory !== 'Receitas',
-  )
-
-  if (selectedPrimaryCat && selectedPrimaryCat !== 'cat_receitas') {
-    const cat = categories.find((c) => c.id === selectedPrimaryCat)
-    filteredExpenses = filteredExpenses.filter((e) => e.primaryCategory === cat?.name)
-
-    if (selectedSecondaryCats.length > 0) {
-      filteredExpenses = filteredExpenses.filter((e) =>
-        selectedSecondaryCats.includes(e.secondaryCategory),
-      )
-    }
-  }
+  const filteredExpenses = useFilteredExpenses(true).filter((e) => e.primaryCategory !== 'Receitas')
 
   // Expanded to 15 top expenses
   const topExpenses = [...filteredExpenses].sort((a, b) => b.value - a.value).slice(0, 15)

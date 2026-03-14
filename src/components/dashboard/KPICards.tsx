@@ -1,34 +1,14 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { TrendingUp, Target, Activity } from 'lucide-react'
-import { useDashboard } from '@/stores/DashboardContext'
+import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function KPICards() {
-  const {
-    expenses,
-    selectedMonths,
-    selectedPrimaryCat,
-    categories,
-    selectedSecondaryCats,
-    budget,
-  } = useDashboard()
-
-  let filteredTransactions = expenses.filter((e) =>
-    selectedMonths.some((m) => e.date.startsWith(m)),
-  )
-
-  if (selectedPrimaryCat && selectedPrimaryCat !== 'cat_receitas') {
-    const cat = categories.find((c) => c.id === selectedPrimaryCat)
-    filteredTransactions = filteredTransactions.filter((e) => e.primaryCategory === cat?.name)
-
-    if (selectedSecondaryCats.length > 0) {
-      filteredTransactions = filteredTransactions.filter((e) =>
-        selectedSecondaryCats.includes(e.secondaryCategory),
-      )
-    }
-  }
+  const { selectedMonths, selectedPrimaryCat, categories, selectedSecondaryCats, budget } =
+    useDashboard()
+  const filteredTransactions = useFilteredExpenses(true)
 
   const totalDespesas = filteredTransactions
     .filter((e) => e.primaryCategory !== 'Receitas')

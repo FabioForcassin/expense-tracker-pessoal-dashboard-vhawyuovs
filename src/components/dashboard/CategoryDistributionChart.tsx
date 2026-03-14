@@ -7,18 +7,17 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LabelList,
 } from 'recharts'
-import { useDashboard } from '@/stores/DashboardContext'
+import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 import { Layers } from 'lucide-react'
+import { formatCurrency } from '@/lib/format'
 
 export function CategoryDistributionChart() {
-  const { categories, expenses, selectedPrimaryCat, selectedMonths } = useDashboard()
-
-  const filteredExpenses = expenses.filter(
-    (e) => selectedMonths.some((m) => e.date.startsWith(m)) && e.primaryCategory !== 'Receitas',
-  )
+  const { categories, selectedPrimaryCat } = useDashboard()
+  const filteredExpenses = useFilteredExpenses(true).filter((e) => e.primaryCategory !== 'Receitas')
 
   let rawData = []
 
@@ -37,7 +36,7 @@ export function CategoryDistributionChart() {
   } else {
     const cat = categories.find((c) => c.id === selectedPrimaryCat)
     if (cat && cat.name !== 'Receitas') {
-      const baseHue = 262
+      const baseHue = 243
       rawData = cat.subcategories
         .map((sub, idx) => ({
           name: sub,
@@ -51,14 +50,19 @@ export function CategoryDistributionChart() {
     }
   }
 
-  const chartConfig: Record<string, any> = {
-    value: { label: 'Gasto' },
-  }
+  const totalValue = rawData.reduce((acc, curr) => acc + curr.value, 0)
 
   const data = rawData.map((d, i) => {
     const key = `cat_${i}`
-    chartConfig[key] = { label: d.name, color: d.color }
-    return { ...d, fill: `var(--color-${key})` }
+    const percentage = totalValue > 0 ? (d.value / totalValue) * 100 : 0
+    return { ...d, fill: d.color, percentage, key }
+  })
+
+  const chartConfig: Record<string, any> = {
+    value: { label: 'Gasto' },
+  }
+  data.forEach((d) => {
+    chartConfig[d.key] = { label: d.name, color: d.color }
   })
 
   if (data.length === 0) {
@@ -85,13 +89,13 @@ export function CategoryDistributionChart() {
           Composição de Gastos
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 min-h-[280px] w-full">
+      <CardContent className="flex-1 min-h-[300px] w-full mt-2">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={data}
               layout="vertical"
-              margin={{ top: 0, right: 20, left: 0, bottom: 0 }}
+              margin={{ top: 0, right: 80, left: 0, bottom: 0 }}
             >
               <CartesianGrid
                 strokeDasharray="3 3"
@@ -114,10 +118,26 @@ export function CategoryDistributionChart() {
                 content={<ChartTooltipContent />}
                 cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
               />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={24}>
+              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={28}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
+                <LabelList
+                  dataKey="percentage"
+                  position="insideLeft"
+                  fill="#ffffff"
+                  formatter={(val: number) => `${val.toFixed(1)}%`}
+                  className="font-bold text-[11px]"
+                  offset={10}
+                />
+                <LabelList
+                  dataKey="value"
+                  position="right"
+                  fill="hsl(var(--foreground))"
+                  formatter={(val: number) => formatCurrency(val)}
+                  className="font-medium text-[11px]"
+                  offset={8}
+                />
               </Bar>
             </BarChart>
           </ResponsiveContainer>

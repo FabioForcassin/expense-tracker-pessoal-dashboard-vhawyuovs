@@ -51,3 +51,9 @@ export const PAYMENT_METHODS = [
   'CC itau empresas - Benera',
   'CC inter master - Benera',
 ]
+
+export const getAccountType = (method: string): string => {
+  if (method.startsWith('CC ')) return 'Cartão de Crédito'
+  if (method.toLowerCase().includes('dinheiro')) return 'Dinheiro'
+  return 'Conta Corrente/Débito'
+}

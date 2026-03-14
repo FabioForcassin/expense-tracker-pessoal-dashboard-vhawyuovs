@@ -7,29 +7,13 @@ import {
   YAxis,
   ReferenceLine,
 } from 'recharts'
-import { useDashboard } from '@/stores/DashboardContext'
+import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
 import { Activity } from 'lucide-react'
 
 export function CumulativeSpendingChart() {
-  const { expenses, selectedMonths, selectedPrimaryCat, selectedSecondaryCats, categories } =
-    useDashboard()
-
-  const allMonthExpenses = expenses.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
-
-  let filteredExpenses = allMonthExpenses.filter((e) => e.primaryCategory !== 'Receitas')
-
-  if (selectedPrimaryCat && selectedPrimaryCat !== 'cat_receitas') {
-    const cat = categories.find((c) => c.id === selectedPrimaryCat)
-    filteredExpenses = filteredExpenses.filter((e) => e.primaryCategory === cat?.name)
-
-    if (selectedSecondaryCats.length > 0) {
-      filteredExpenses = filteredExpenses.filter((e) =>
-        selectedSecondaryCats.includes(e.secondaryCategory),
-      )
-    }
-  }
+  const filteredExpenses = useFilteredExpenses(true).filter((e) => e.primaryCategory !== 'Receitas')
 
   const daysInMonth = 30
   let cumulative = 0

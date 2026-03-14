@@ -6,94 +6,105 @@
 
 @layer base {
   :root {
-    /* Lilac/Off-white theme based on "positive energy" & premium look */
-    --background: 260 20% 99%; /* Very light off-white with lilac tint */
-    --foreground: 260 30% 15%; /* Deep purple-gray for text */
+    /* Slate / Indigo / Emerald Professional Theme */
+    --background: 210 20% 98%; /* Slate 50 */
+    --foreground: 222 47% 11%; /* Slate 900 */
 
     --card: 0 0% 100%;
-    --card-foreground: 260 30% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 260 30% 15%;
+    --popover-foreground: 222 47% 11%;
 
-    /* Vibrant Lilac as Primary */
-    --primary: 262 83% 58%; /* #7C3AED / Vibrant Lilac */
-    --primary-foreground: 0 0% 100%;
+    /* Indigo 600 as Primary */
+    --primary: 243 75% 59%;
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 260 14% 94%;
-    --secondary-foreground: 260 30% 15%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 260 14% 94%;
-    --muted-foreground: 260 15% 50%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 260 14% 94%;
-    --accent-foreground: 260 30% 15%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
-    --destructive: 350 89% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --success: 150 84% 40%;
-    --success-foreground: 0 0% 100%;
+    /* Emerald 600 as Success */
+    --success: 158 64% 39%;
+    --success-foreground: 210 40% 98%;
 
-    --border: 260 15% 90%;
-    --input: 260 15% 90%;
-    --ring: 262 83% 58%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 243 75% 59%;
 
     --radius: 1rem;
 
-    --sidebar-background: 260 20% 98%;
-    --sidebar-foreground: 260 30% 15%;
-    --sidebar-primary: 262 83% 58%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 14% 92%;
-    --sidebar-accent-foreground: 260 30% 15%;
-    --sidebar-border: 260 15% 90%;
-    --sidebar-ring: 262 83% 58%;
+    --sidebar-background: 210 20% 98%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 243 75% 59%;
+    --sidebar-primary-foreground: 210 40% 98%;
+    --sidebar-accent: 210 40% 96.1%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214.3 31.8% 91.4%;
+    --sidebar-ring: 243 75% 59%;
 
-    /* Chart Colors adjusted for Lilac theme */
-    --chart-1: 262 83% 58%; /* Lilac */
-    --chart-2: 280 65% 60%; /* Purple */
-    --chart-3: 310 65% 60%; /* Pinkish */
-    --chart-4: 230 70% 65%; /* Blueish */
-    --chart-5: 200 80% 50%; /* Light Blue */
+    /* Professional Chart Colors (Indigo, Emerald, Sky, Violet, Amber) */
+    --chart-1: 243 75% 59%; /* Indigo */
+    --chart-2: 158 64% 39%; /* Emerald */
+    --chart-3: 199 89% 48%; /* Sky */
+    --chart-4: 262 83% 58%; /* Violet */
+    --chart-5: 45 93% 47%; /* Amber */
   }
 
   .dark {
-    --background: 260 30% 5%;
-    --foreground: 260 20% 95%;
-    --card: 260 30% 7%;
-    --card-foreground: 260 20% 95%;
-    --popover: 260 30% 7%;
-    --popover-foreground: 260 20% 95%;
-    --primary: 262 83% 65%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 260 20% 15%;
-    --secondary-foreground: 260 20% 95%;
-    --muted: 260 20% 15%;
-    --muted-foreground: 260 15% 65%;
-    --accent: 260 20% 15%;
-    --accent-foreground: 260 20% 95%;
-    --destructive: 350 89% 60%;
-    --destructive-foreground: 0 0% 100%;
-    --success: 150 84% 40%;
-    --success-foreground: 0 0% 100%;
-    --border: 260 20% 15%;
-    --input: 260 20% 15%;
-    --ring: 262 83% 65%;
-    --sidebar-background: 260 30% 5%;
-    --sidebar-foreground: 260 20% 95%;
-    --sidebar-primary: 262 83% 65%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 260 20% 15%;
-    --sidebar-accent-foreground: 260 20% 95%;
-    --sidebar-border: 260 20% 15%;
-    --sidebar-ring: 262 83% 65%;
+    --background: 222 47% 11%;
+    --foreground: 210 40% 98%;
 
-    --chart-1: 262 83% 65%;
-    --chart-2: 280 65% 65%;
-    --chart-3: 310 65% 65%;
-    --chart-4: 230 70% 70%;
-    --chart-5: 200 80% 55%;
+    --card: 222 47% 13%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222 47% 13%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 243 75% 65%;
+    --primary-foreground: 222 47% 11%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --success: 158 64% 45%;
+    --success-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 243 75% 65%;
+
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 243 75% 65%;
+    --sidebar-primary-foreground: 222 47% 11%;
+    --sidebar-accent: 217.2 32.6% 17.5%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 217.2 32.6% 17.5%;
+    --sidebar-ring: 243 75% 65%;
+
+    --chart-1: 243 75% 65%;
+    --chart-2: 158 64% 45%;
+    --chart-3: 199 89% 55%;
+    --chart-4: 262 83% 65%;
+    --chart-5: 45 93% 55%;
   }
 
   section[aria-label='Notifications alt+T'] {
@@ -149,7 +160,7 @@
 
   /* Glassmorphism utility */
   .glass {
-    @apply bg-white/70 dark:bg-black/50 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-[0_4px_24px_-8px_rgba(0,0,0,0.1)];
+    @apply bg-white/80 dark:bg-black/40 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-subtle;
   }
 
   .animate-accordion-down {

@@ -1,11 +1,11 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
-import { Expense, AppCategory, BudgetStore } from '@/types'
+import { Expense, AppCategory, BudgetStore, getAccountType } from '@/types'
 
 export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_receitas',
     name: 'Receitas',
-    color: 'hsl(150 84% 40%)',
+    color: 'hsl(158 64% 39%)',
     icon: 'TrendingUp',
     subcategories: [
       'Salário',
@@ -37,7 +37,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_moradia',
     name: 'Moradia',
-    color: 'hsl(262 83% 58%)',
+    color: 'hsl(243 75% 59%)',
     icon: 'Home',
     subcategories: [
       'Condomínio',
@@ -61,7 +61,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_transporte',
     name: 'Transporte',
-    color: 'hsl(280 65% 60%)',
+    color: 'hsl(199 89% 48%)',
     icon: 'Car',
     subcategories: [
       'Seguro Automotivo',
@@ -81,7 +81,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_saude',
     name: 'Saúde',
-    color: 'hsl(350 89% 60%)',
+    color: 'hsl(0 84% 60%)',
     icon: 'HeartPulse',
     subcategories: [
       'Plano de Saúde',
@@ -96,7 +96,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_educacao',
     name: 'Educação',
-    color: 'hsl(40 90% 50%)',
+    color: 'hsl(45 93% 47%)',
     icon: 'BookOpen',
     subcategories: [
       'Creche/Escola/Colégio',
@@ -132,7 +132,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
   {
     id: 'cat_pessoal',
     name: 'Pessoal',
-    color: 'hsl(310 65% 60%)',
+    color: 'hsl(262 83% 58%)',
     icon: 'User',
     subcategories: [
       'Roupas e Acessórios',
@@ -220,7 +220,7 @@ export const INITIAL_CATEGORIES: AppCategory[] = [
 ]
 
 const INITIAL_EXPENSES: Expense[] = [
-  // Receitas Históricas
+  // 2024 Data
   {
     id: '100',
     date: '2024-03-01',
@@ -236,37 +236,6 @@ const INITIAL_EXPENSES: Expense[] = [
     classification: 'Pessoal',
     who: 'Fabio',
   },
-  {
-    id: '101',
-    date: '2024-03-10',
-    monthNum: 3,
-    competency: 'Mar',
-    establishment: 'Imóvel Centro',
-    primaryCategory: 'Receitas',
-    secondaryCategory: 'Aluguel',
-    type: 'Receita',
-    paymentMethod: 'Itaú',
-    value: 2500.0,
-    comment: 'Aluguel recebido',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '102',
-    date: '2024-02-01',
-    monthNum: 2,
-    competency: 'Fev',
-    establishment: 'Empresa S.A',
-    primaryCategory: 'Receitas',
-    secondaryCategory: 'Salário',
-    type: 'Receita',
-    paymentMethod: 'Itaú',
-    value: 12500.0,
-    comment: 'Salário Mensal',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  // Despesas Históricas
   {
     id: '1',
     date: '2024-03-02',
@@ -297,109 +266,85 @@ const INITIAL_EXPENSES: Expense[] = [
     classification: 'Pessoal',
     who: 'Fabio',
   },
+  // 2025 Data Sample
   {
-    id: '4',
-    date: '2024-02-12',
-    monthNum: 2,
-    competency: 'Fev',
-    establishment: 'Netflix',
-    primaryCategory: 'Moradia',
-    secondaryCategory: 'Streamings',
-    type: 'Fixa',
-    paymentMethod: 'CC Nubank master',
-    value: 55.9,
-    comment: 'Assinatura',
+    id: '200',
+    date: '2025-01-05',
+    monthNum: 1,
+    competency: 'Jan',
+    establishment: 'Empresa S.A',
+    primaryCategory: 'Receitas',
+    secondaryCategory: 'Salário',
+    type: 'Receita',
+    paymentMethod: 'Itaú',
+    value: 13500.0,
+    comment: 'Salário Atualizado',
     classification: 'Pessoal',
-    who: 'Família',
+    who: 'Fabio',
   },
   {
-    id: '5',
-    date: '2024-02-15',
+    id: '201',
+    date: '2025-01-12',
+    monthNum: 1,
+    competency: 'Jan',
+    establishment: 'Pão de Açúcar',
+    primaryCategory: 'Alimentação',
+    secondaryCategory: 'Supermercado/Feira',
+    type: 'Variável',
+    paymentMethod: 'CC Itaú visa infinity',
+    value: 920.0,
+    comment: '',
+    classification: 'Pessoal',
+    who: 'Fabio',
+  },
+  {
+    id: '202',
+    date: '2025-02-15',
     monthNum: 2,
     competency: 'Fev',
     establishment: 'Drogasil',
     primaryCategory: 'Saúde',
     secondaryCategory: 'Medicamentos/Farmácia',
     type: 'Variável',
-    paymentMethod: 'CC Itaú visa infinity',
-    value: 225.9,
-    comment: 'Remédios',
+    paymentMethod: 'CC Nubank master',
+    value: 180.0,
+    comment: '',
     classification: 'Pessoal',
     who: 'Fabio',
   },
+  // 2026 Data Sample
   {
-    id: '6',
-    date: '2024-01-18',
-    monthNum: 1,
-    competency: 'Jan',
-    establishment: 'Enel',
-    primaryCategory: 'Moradia',
-    secondaryCategory: 'Luz',
-    type: 'Variável',
-    paymentMethod: 'Itaú',
-    value: 310.0,
-    comment: 'Luz Jan',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '7',
-    date: '2024-03-20',
+    id: '300',
+    date: '2026-03-10',
     monthNum: 3,
     competency: 'Mar',
-    establishment: 'Pecorino',
-    primaryCategory: 'Alimentação',
-    secondaryCategory: 'Cafés e Restaurantes',
-    type: 'Variável',
-    paymentMethod: 'CC Itaú visa infinity',
-    value: 320.0,
-    comment: 'Jantar',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '8',
-    date: '2024-03-25',
-    monthNum: 3,
-    competency: 'Mar',
-    establishment: 'Posto Ipiranga',
+    establishment: 'Oficina Autorizada',
     primaryCategory: 'Transporte',
-    secondaryCategory: 'Combustível',
+    secondaryCategory: 'Manutenção',
     type: 'Variável',
     paymentMethod: 'CC Nubank master',
-    value: 250.0,
-    comment: 'Gasolina',
-    classification: 'Pessoal',
-    who: 'Fabio',
-  },
-  {
-    id: '9',
-    date: '2024-01-28',
-    monthNum: 1,
-    competency: 'Jan',
-    establishment: 'SmartFit',
-    primaryCategory: 'Pessoal',
-    secondaryCategory: 'Academia',
-    type: 'Fixa',
-    paymentMethod: 'CC Nubank master',
-    value: 120.0,
-    comment: 'Mensalidade',
+    value: 1200.0,
+    comment: 'Revisão Anual',
     classification: 'Pessoal',
     who: 'Fabio',
   },
 ]
 
-// Generate an initial default budget
+// Generate an initial default budget spanning 2024-2026
 const generateInitialBudget = (): BudgetStore => {
   const budget: BudgetStore = {}
+  const years = [2024, 2025, 2026]
+
   INITIAL_CATEGORIES.forEach((cat) => {
     cat.subcategories.forEach((sub) => {
-      // Default to 15000 for total monthly recipes and some small values for expenses
       const defaultVal = cat.name === 'Receitas' ? 2500 : 250
-      for (let month = 1; month <= 12; month++) {
-        const monthStr = month.toString().padStart(2, '0')
-        budget[`${cat.name}|${sub}|2024-${monthStr}`] = defaultVal
-      }
+      years.forEach((year) => {
+        for (let month = 1; month <= 12; month++) {
+          const monthStr = month.toString().padStart(2, '0')
+          budget[`${cat.name}|${sub}|${year}-${monthStr}`] =
+            defaultVal * (year === 2024 ? 1 : year === 2025 ? 1.05 : 1.1) // slightly increase budget per year
+        }
+      })
     })
   })
   return budget
@@ -415,6 +360,8 @@ interface DashboardContextType {
   setSelectedPrimaryCat: (id: string | null) => void
   selectedSecondaryCats: string[]
   toggleSecondaryCat: (name: string) => void
+  selectedAccountTypes: string[]
+  toggleAccountType: (type: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => void
   updateBudget: (key: string, value: number) => void
   bulkImportData: (type: 'realizado' | 'orcamento', year: string) => void
@@ -429,6 +376,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [selectedMonths, setSelectedMonths] = useState<string[]>(['2024-03'])
   const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
   const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
+  const [selectedAccountTypes, setSelectedAccountTypes] = useState<string[]>([])
 
   const toggleSecondaryCat = (name: string) => {
     setSelectedSecondaryCats((prev) =>
@@ -439,6 +387,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const handleSetPrimaryCat = (id: string | null) => {
     setSelectedPrimaryCat(id)
     setSelectedSecondaryCats([])
+  }
+
+  const toggleAccountType = (type: string) => {
+    setSelectedAccountTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    )
   }
 
   const addExpense = (e: Omit<Expense, 'id'>) => {
@@ -453,8 +407,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const bulkImportData = (type: 'realizado' | 'orcamento', year: string) => {
     if (type === 'realizado') {
       const newExpenses: Expense[] = []
-      const numExpenses = 120 // generate random transactions across the year
-      const methods = ['Itaú', 'Nubank', 'CC Itaú visa infinity', 'Santander']
+      const numExpenses = 120
+      const methods = ['Itaú', 'Nubank', 'CC Itaú visa infinity', 'Santander', 'Dinheiro']
 
       for (let i = 0; i < numExpenses; i++) {
         const m = Math.floor(Math.random() * 12) + 1
@@ -488,7 +442,6 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       }
       setExpenses((prev) => [...prev, ...newExpenses])
     } else {
-      // Simulate budget update logic with +/- 30% variation
       const newBudget = { ...budget }
       Object.keys(newBudget).forEach((k) => {
         if (k.includes(`|${year}-`)) {
@@ -511,6 +464,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         setSelectedPrimaryCat: handleSetPrimaryCat,
         selectedSecondaryCats,
         toggleSecondaryCat,
+        selectedAccountTypes,
+        toggleAccountType,
         addExpense,
         updateBudget,
         bulkImportData,
@@ -525,4 +480,45 @@ export function useDashboard() {
   const context = useContext(DashboardContext)
   if (!context) throw new Error('useDashboard must be used within DashboardProvider')
   return context
+}
+
+export function useFilteredExpenses(applyMonthFilter = true) {
+  const context = useContext(DashboardContext)
+  if (!context) throw new Error('useFilteredExpenses must be used within DashboardProvider')
+
+  const {
+    expenses,
+    selectedMonths,
+    selectedPrimaryCat,
+    selectedSecondaryCats,
+    selectedAccountTypes,
+    categories,
+  } = context
+
+  let filtered = expenses
+
+  if (applyMonthFilter && selectedMonths.length > 0) {
+    filtered = filtered.filter((e) => selectedMonths.some((m) => e.date.startsWith(m)))
+  }
+
+  if (selectedPrimaryCat) {
+    const cat = categories.find((c) => c.id === selectedPrimaryCat)
+    if (selectedPrimaryCat !== 'cat_receitas') {
+      filtered = filtered.filter((e) => e.primaryCategory === cat?.name)
+    } else {
+      filtered = filtered.filter((e) => e.primaryCategory === 'Receitas')
+    }
+
+    if (selectedSecondaryCats.length > 0) {
+      filtered = filtered.filter((e) => selectedSecondaryCats.includes(e.secondaryCategory))
+    }
+  }
+
+  if (selectedAccountTypes.length > 0) {
+    filtered = filtered.filter((e) =>
+      selectedAccountTypes.includes(getAccountType(e.paymentMethod)),
+    )
+  }
+
+  return filtered
 }

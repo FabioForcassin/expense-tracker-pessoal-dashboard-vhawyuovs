@@ -19,8 +19,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Database as DatabaseIcon, Download } from 'lucide-react'
+import { Database as DatabaseIcon, Download, FileDown } from 'lucide-react'
 import { ImportDataModal } from '@/components/modals/ImportBudgetModal'
+import { exportToCSV } from '@/lib/export'
 
 const monthsLabels = [
   'Jan',
@@ -70,7 +71,7 @@ function BudgetCell({
 }
 
 export default function Database() {
-  const { categories, budget, updateBudget } = useDashboard()
+  const { categories, budget, updateBudget, expenses } = useDashboard()
   const [selectedYear, setSelectedYear] = useState('2024')
   const [isImportModalOpen, setImportModalOpen] = useState(false)
 
@@ -88,10 +89,20 @@ export default function Database() {
             Gerencie os dados brutos e ajuste o seu planejamento orçamentário.
           </p>
         </div>
-        <Button onClick={() => setImportModalOpen(true)} className="gap-2 shrink-0">
-          <Download className="w-4 h-4" />
-          Importar Lote
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => exportToCSV(expenses, 'dados_historico.csv')}
+            className="gap-2 shrink-0 border-success/30 hover:border-success/60 text-success hover:text-success/90 hover:bg-success/5"
+          >
+            <FileDown className="w-4 h-4" />
+            Exportar CSV
+          </Button>
+          <Button onClick={() => setImportModalOpen(true)} className="gap-2 shrink-0">
+            <Download className="w-4 h-4" />
+            Importar Lote
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="orcamento" className="w-full">

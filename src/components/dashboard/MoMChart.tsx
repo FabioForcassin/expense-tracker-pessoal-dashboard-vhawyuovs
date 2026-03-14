@@ -8,7 +8,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from 'recharts'
-import { useDashboard } from '@/stores/DashboardContext'
+import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart'
 import { BarChart3 } from 'lucide-react'
@@ -29,11 +29,11 @@ const monthNames: Record<string, string> = {
 }
 
 export function MoMChart() {
-  const { expenses } = useDashboard()
+  const allExpenses = useFilteredExpenses(false)
 
   const allMonths = Array.from(
     new Set(
-      expenses.map((e) => {
+      allExpenses.map((e) => {
         const [y, m] = e.date.split('-')
         return `${y}-${m}`
       }),
@@ -44,7 +44,7 @@ export function MoMChart() {
 
   const data = displayMonths.map((monthStr) => {
     const [y, m] = monthStr.split('-')
-    const monthExpenses = expenses.filter((e) => e.date.startsWith(monthStr))
+    const monthExpenses = allExpenses.filter((e) => e.date.startsWith(monthStr))
 
     const receitas = monthExpenses
       .filter((e) => e.primaryCategory === 'Receitas')
