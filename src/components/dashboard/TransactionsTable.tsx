@@ -93,7 +93,7 @@ export function TransactionsTable({ full = false }: { full?: boolean }) {
                       className="text-sm text-muted-foreground max-w-[150px] truncate"
                       title={tx.comment}
                     >
-                      {tx.comment || '-'}
+                      {tx.comment}
                     </TableCell>
                     {full && (
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">

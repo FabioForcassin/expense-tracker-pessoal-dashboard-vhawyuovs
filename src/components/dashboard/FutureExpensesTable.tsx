@@ -106,7 +106,7 @@ export function FutureExpensesTable({ full = false }: { full?: boolean }) {
                       className="text-sm text-muted-foreground max-w-[150px] truncate"
                       title={tx.comment}
                     >
-                      {tx.comment || '-'}
+                      {tx.comment}
                     </TableCell>
                     <TableCell
                       className={`text-right font-semibold text-sm whitespace-nowrap ${isIncome ? 'text-success' : 'text-foreground'}`}

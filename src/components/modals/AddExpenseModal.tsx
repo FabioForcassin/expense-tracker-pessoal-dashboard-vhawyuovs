@@ -42,8 +42,8 @@ export function AddExpenseModal({
   const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [payment, setPayment] = useState('')
   const [comment, setComment] = useState('')
-  const [classification, setClassification] = useState('Pessoal')
-  const [who, setWho] = useState('Usuário')
+  const [classification, setClassification] = useState('')
+  const [who, setWho] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -111,8 +111,8 @@ export function AddExpenseModal({
     setType('Variável')
     setPayment('')
     setComment('')
-    setClassification('Pessoal')
-    setWho('Usuário')
+    setClassification('')
+    setWho('')
   }
 
   return (
@@ -272,24 +272,15 @@ export function AddExpenseModal({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label>Classificação</Label>
-              <Select value={classification} onValueChange={setClassification} required>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Pessoal">Pessoal</SelectItem>
-                  <SelectItem value="Empresa">Empresa</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                value={classification}
+                onChange={(e) => setClassification(e.target.value)}
+                placeholder="Ex: Pessoal, Empresa..."
+              />
             </div>
             <div className="grid gap-2">
               <Label>Quem</Label>
-              <Input
-                value={who}
-                onChange={(e) => setWho(e.target.value)}
-                required
-                placeholder="Ex: Fabio"
-              />
+              <Input value={who} onChange={(e) => setWho(e.target.value)} placeholder="Ex: Fabio" />
             </div>
           </div>
 

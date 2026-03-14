@@ -78,19 +78,19 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
                 date: cols[0] || `${year}-01-01`,
                 monthNum: parseInt(cols[1]) || 1,
                 competency: cols[2] || 'Jan',
-                // Column E is index 4
-                establishment: cols[4] || 'Desconhecido',
-                primaryCategory: cols[5] || 'Outros',
-                secondaryCategory: cols[6] || 'Outros',
-                type: (cols[7] as any) || 'Variável',
-                paymentMethod: cols[8] || 'Dinheiro',
+                // Column E is index 4 - exactly as it appears
+                establishment: cols[4] || '',
+                primaryCategory: cols[5] || '',
+                secondaryCategory: cols[6] || '',
+                type: (cols[7] as any) || '',
+                paymentMethod: cols[8] || '',
                 value: parseFloat(cols[9]) || 0,
-                // Column K is index 10
-                comment: cols[10] !== undefined ? cols[10] : '',
-                // Column L is index 11
-                classification: cols[11] || 'Pessoal',
-                // Column M is index 12
-                who: cols[12] || 'Usuário',
+                // Column K is index 10 - Comentário
+                comment: cols[10] || '',
+                // Column L is index 11 - Classificação
+                classification: cols[11] || '',
+                // Column M is index 12 - Quem
+                who: cols[12] || '',
               })
             }
           }
