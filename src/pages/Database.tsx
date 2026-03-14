@@ -148,7 +148,7 @@ export default function Database() {
                     </TableHead>
                     {monthsLabels.map((m) => (
                       <TableHead
-                        key={m}
+                        key={`th-${m}`}
                         className="min-w-[90px] text-right pr-4 font-semibold text-foreground"
                       >
                         {m}
@@ -165,7 +165,7 @@ export default function Database() {
                       let rowTotal = 0
                       return (
                         <TableRow
-                          key={`${cat.name}-${sub}`}
+                          key={`${cat.id}-${sub}`}
                           className="hover:bg-muted/30 border-b border-border/50"
                         >
                           <TableCell className="sticky left-0 z-20 bg-card font-medium text-xs text-muted-foreground border-r border-border/10">
@@ -181,7 +181,7 @@ export default function Database() {
                             rowTotal += val
                             return (
                               <TableCell
-                                key={mIdx}
+                                key={`${cat.id}-${sub}-${monthKey}`}
                                 className="p-1 border-r border-border/20 last:border-0"
                               >
                                 <BudgetCell

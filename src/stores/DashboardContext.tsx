@@ -491,7 +491,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   }
 
   const addExpense = (e: Omit<Expense, 'id'>) => {
-    const newExpense = { ...e, id: Date.now().toString() }
+    const newId =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+
+    const newExpense = { ...e, id: newId }
     setExpenses((prev) => [...prev, newExpense])
   }
 
@@ -542,7 +547,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         const val = isReceita ? Math.random() * 8000 + 2000 : Math.random() * 600 + 20
 
         newExpenses.push({
-          id: `imp_${Date.now()}_${i}`,
+          id: `imp_${Date.now()}_${i}_${Math.random().toString(36).substring(2, 8)}`,
           date,
           monthNum: m,
           competency: m.toString().padStart(2, '0'),
