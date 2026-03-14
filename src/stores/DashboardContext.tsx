@@ -235,12 +235,11 @@ const generateInitialBudget = (): BudgetStore => {
   const years = [2024, 2025, 2026, 2027, 2028]
   INITIAL_CATEGORIES.forEach((cat) => {
     cat.subcategories.forEach((sub) => {
-      const defaultVal = cat.name === 'Receitas' ? 2500 : 250
+      // Initialize with 0s to ensure total data isolation for new users
       years.forEach((year) => {
         for (let month = 1; month <= 12; month++) {
           const monthStr = month.toString().padStart(2, '0')
-          budget[`${cat.name}|${sub}|${year}-${monthStr}`] =
-            defaultVal * (year === 2024 ? 1 : year === 2025 ? 1.05 : 1.1)
+          budget[`${cat.name}|${sub}|${year}-${monthStr}`] = 0
         }
       })
     })

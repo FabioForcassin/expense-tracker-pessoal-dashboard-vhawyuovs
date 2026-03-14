@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useDashboard } from '@/stores/DashboardContext'
+import { useAuth } from '@/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Table,
@@ -19,16 +20,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import { Users as UsersIcon, UserPlus, Shield, User, Mail } from 'lucide-react'
+import { Users as UsersIcon, UserPlus, Shield, User, Mail, Trash2 } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { inviteUser } from '@/services/admin'
+import { inviteUser, deleteUser, toggleUserStatus } from '@/services/admin'
 
 export default function AdminUsers() {
+  const { user } = useAuth()
   const { profiles, fetchProfiles } = useDashboard()
   const [email, setEmail] = useState('')
   const [role, setRole] = useState('user')
   const [loading, setLoading] = useState(false)
+
+  const [userToDelete, setUserToDelete] = useState<string | null>(null)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,6 +79,37 @@ export default function AdminUsers() {
     }
   }
 
+  const openDeleteDialog = (id: string) => {
+    setUserToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!userToDelete) return
+    setActionLoading(true)
+    try {
+      await deleteUser(userToDelete)
+      toast.success('Usuário excluído com sucesso.')
+      await fetchProfiles()
+    } catch (err: any) {
+      toast.error(`Erro ao excluir: ${err.message}`)
+    } finally {
+      setActionLoading(false)
+      setUserToDelete(null)
+      setDeleteDialogOpen(false)
+    }
+  }
+
+  const handleToggleStatus = async (id: string, isActive: boolean) => {
+    try {
+      await toggleUserStatus(id, isActive)
+      toast.success(`Usuário ${isActive ? 'ativado' : 'desativado'} com sucesso.`)
+      await fetchProfiles()
+    } catch (err: any) {
+      toast.error(`Erro ao atualizar status: ${err.message}`)
+    }
+  }
+
   return (
     <div className="max-w-[1400px] w-full mx-auto flex flex-col gap-6 animate-fade-in pb-8">
       <div>
@@ -72,7 +120,7 @@ export default function AdminUsers() {
           Gestão de Usuários
         </h2>
         <p className="text-muted-foreground text-sm mt-2">
-          Gerencie permissões e convide novos membros para a plataforma financeira.
+          Gerencie permissões, adicione, remova ou desative o acesso de membros.
         </p>
       </div>
 
@@ -137,47 +185,84 @@ export default function AdminUsers() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto flex-1">
-              <Table className="min-w-[500px]">
+              <Table className="min-w-[650px]">
                 <TableHeader className="bg-muted/10">
                   <TableRow>
                     <TableHead>E-mail</TableHead>
                     <TableHead>Perfil</TableHead>
+                    <TableHead>Status</TableHead>
                     <TableHead>Data de Criação</TableHead>
+                    <TableHead className="w-[80px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {profiles.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="h-32 text-center text-muted-foreground">
+                      <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                         Nenhum usuário encontrado.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    profiles.map((p) => (
-                      <TableRow key={p.id} className="hover:bg-muted/30">
-                        <TableCell className="font-medium flex items-center gap-2">
-                          <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
-                            <User className="w-4 h-4" />
-                          </div>
-                          {p.email}
-                        </TableCell>
-                        <TableCell>
-                          {p.role === 'admin' ? (
-                            <Badge
-                              variant="outline"
-                              className="bg-primary/10 text-primary border-primary/20"
+                    profiles.map((p) => {
+                      const isActive = (p as any).is_active ?? true
+                      const isSelf = user?.id === p.id
+
+                      return (
+                        <TableRow key={p.id} className="hover:bg-muted/30">
+                          <TableCell className="font-medium flex items-center gap-2">
+                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-muted-foreground">
+                              <User className="w-4 h-4" />
+                            </div>
+                            {p.email}
+                          </TableCell>
+                          <TableCell>
+                            {p.role === 'admin' ? (
+                              <Badge
+                                variant="outline"
+                                className="bg-primary/10 text-primary border-primary/20"
+                              >
+                                Administrador
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">Usuário</Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Switch
+                                checked={isActive}
+                                onCheckedChange={(val) => handleToggleStatus(p.id, val)}
+                                disabled={isSelf}
+                              />
+                              <span className="text-xs text-muted-foreground">
+                                {isActive ? 'Ativo' : 'Desativado'}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground text-sm">
+                            {p.created_at
+                              ? new Date(p.created_at).toLocaleDateString('pt-BR')
+                              : '-'}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                              onClick={() => openDeleteDialog(p.id)}
+                              disabled={isSelf}
+                              title={
+                                isSelf
+                                  ? 'Você não pode excluir sua própria conta'
+                                  : 'Excluir Usuário'
+                              }
                             >
-                              Administrador
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline">Usuário</Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground text-sm">
-                          {p.created_at ? new Date(p.created_at).toLocaleDateString('pt-BR') : '-'}
-                        </TableCell>
-                      </TableRow>
-                    ))
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })
                   )}
                 </TableBody>
               </Table>
@@ -185,6 +270,32 @@ export default function AdminUsers() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir este usuário permanentemente? Todos os dados associados
+              a ele (receitas, despesas, orçamentos, etc) serão apagados do sistema em cascata e
+              esta ação não poderá ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                handleConfirmDelete()
+              }}
+              disabled={actionLoading}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+            >
+              {actionLoading ? 'Excluindo...' : 'Excluir Usuário'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

@@ -1,120 +1,185 @@
-import { useFilteredExpenses } from '@/stores/DashboardContext'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { formatCurrency, formatDate } from '@/lib/format'
-import { CalendarClock } from 'lucide-react'
-import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
+import React, { useState } from 'react'
+import { useDashboard } from '@/stores/DashboardContext'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
-  TableHeader,
-  TableRow,
-  TableHead,
   TableBody,
   TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Target } from 'lucide-react'
 
 export default function Predictability() {
-  const expenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
-  const d = new Date()
-  const lastDayOfMonth = new Date(d.getFullYear(), d.getMonth() + 1, 0)
-  const lastDayStr = `${lastDayOfMonth.getFullYear()}-${(lastDayOfMonth.getMonth() + 1).toString().padStart(2, '0')}-${lastDayOfMonth.getDate().toString().padStart(2, '0')}`
+  const { categories, budget, updateBudget, selectedYear, setSelectedYear } = useDashboard()
+  const [autoReplicate, setAutoReplicate] = useState(true)
 
-  const futureExpenses = expenses
-    .filter((e) => e.date > lastDayStr)
-    .sort((a, b) => a.date.localeCompare(b.date))
+  const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
+  const monthLabels = [
+    'Jan',
+    'Fev',
+    'Mar',
+    'Abr',
+    'Mai',
+    'Jun',
+    'Jul',
+    'Ago',
+    'Set',
+    'Out',
+    'Nov',
+    'Dez',
+  ]
 
-  const grouped = futureExpenses.reduce(
-    (acc, curr) => {
-      const month = curr.date.substring(0, 7) // YYYY-MM
-      if (!acc[month]) acc[month] = []
-      acc[month].push(curr)
-      return acc
-    },
-    {} as Record<string, typeof expenses>,
-  )
+  const handleBudgetChange = (
+    catName: string,
+    subName: string,
+    monthIdx: number,
+    value: string,
+  ) => {
+    const numValue = parseFloat(value) || 0
 
-  const sortedMonths = Object.keys(grouped).sort()
-
-  const formatMonth = (str: string) => {
-    const [y, m] = str.split('-')
-    const date = new Date(parseInt(y), parseInt(m) - 1, 1)
-    const mName = date.toLocaleString('pt-BR', { month: 'long' })
-    return `${mName.charAt(0).toUpperCase() + mName.slice(1)} ${y}`
+    if (autoReplicate) {
+      for (let i = monthIdx; i < 12; i++) {
+        const key = `${catName}|${subName}|${selectedYear}-${months[i]}`
+        updateBudget(key, numValue)
+      }
+    } else {
+      const key = `${catName}|${subName}|${selectedYear}-${months[monthIdx]}`
+      updateBudget(key, numValue)
+    }
   }
 
+  const currentYearOptions = [
+    (new Date().getFullYear() - 1).toString(),
+    new Date().getFullYear().toString(),
+    (new Date().getFullYear() + 1).toString(),
+    (new Date().getFullYear() + 2).toString(),
+  ]
+
   return (
-    <div className="max-w-[1400px] w-full mx-auto flex flex-col gap-6 animate-fade-in pb-8">
-      <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3 text-foreground">
-          <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
-            <CalendarClock className="w-6 h-6" />
+    <div className="max-w-[1600px] w-full mx-auto flex flex-col gap-6 animate-fade-in pb-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight flex items-center gap-3 text-foreground">
+            <div className="p-2.5 bg-primary/10 text-primary rounded-xl">
+              <Target className="w-6 h-6" />
+            </div>
+            Orçamento (Previsibilidade)
+          </h2>
+          <p className="text-muted-foreground text-sm mt-2">
+            Planeje suas receitas e despesas. Insira os valores esperados para cada mês do ano.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-4 bg-card p-2 rounded-lg border shadow-sm">
+          <div className="flex items-center gap-2 px-2">
+            <Switch
+              id="auto-replicate"
+              checked={autoReplicate}
+              onCheckedChange={setAutoReplicate}
+            />
+            <Label htmlFor="auto-replicate" className="cursor-pointer text-sm font-medium">
+              Auto-replicar p/ meses seguintes
+            </Label>
           </div>
-          Previsibilidade de Parcelas
-        </h2>
-        <p className="text-muted-foreground text-sm mt-2">
-          Visualize suas despesas futuras e parcelamentos organizados por mês.
-        </p>
+          <div className="w-[1px] h-6 bg-border mx-1"></div>
+          <div className="flex items-center gap-2 pr-2">
+            <Label className="whitespace-nowrap text-sm font-medium">Ano Fiscal:</Label>
+            <Select value={selectedYear} onValueChange={setSelectedYear}>
+              <SelectTrigger className="w-[90px] h-8">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currentYearOptions.map((y) => (
+                  <SelectItem key={y} value={y}>
+                    {y}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
       </div>
 
-      {sortedMonths.length === 0 ? (
-        <Card className="glass">
-          <CardContent className="p-8 text-center text-muted-foreground">
-            Nenhuma despesa futura registrada para os filtros selecionados.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-6">
-          {sortedMonths.map((month) => {
-            const monthTotal = grouped[month].reduce((a, b) => a + b.value, 0)
-            return (
-              <Card key={month} className="glass overflow-hidden shadow-sm">
-                <CardHeader className="bg-muted/30 border-b border-border/40 py-4 flex flex-row items-center justify-between">
-                  <CardTitle className="text-lg font-bold">{formatMonth(month)}</CardTitle>
-                  <span className="font-bold text-destructive">{formatCurrency(monthTotal)}</span>
-                </CardHeader>
-                <CardContent className="p-0 overflow-x-auto">
-                  <Table className="min-w-[600px]">
-                    <TableHeader className="bg-muted/10">
-                      <TableRow>
-                        <TableHead className="w-[120px]">Data</TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {grouped[month].map((tx) => (
-                        <TableRow key={tx.id} className="hover:bg-muted/30">
-                          <TableCell className="text-sm text-muted-foreground font-medium">
-                            {formatDate(tx.date)}
+      <Card className="glass overflow-hidden shadow-sm">
+        <CardContent className="p-0 overflow-auto max-h-[70vh]">
+          <Table className="border-collapse min-w-[1200px]">
+            <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
+              <TableRow className="hover:bg-muted/50">
+                <TableHead className="min-w-[220px] bg-muted/50 border-r border-border/40 font-semibold">
+                  Categoria / Subcategoria
+                </TableHead>
+                {monthLabels.map((m) => (
+                  <TableHead
+                    key={m}
+                    className="min-w-[100px] text-center bg-muted/50 border-r border-border/40 font-semibold"
+                  >
+                    {m}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {categories.map((cat) => (
+                <React.Fragment key={cat.name}>
+                  <TableRow className="bg-muted/30 hover:bg-muted/40">
+                    <TableCell
+                      colSpan={13}
+                      className="font-bold text-foreground py-3 border-y border-border/40"
+                    >
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-3 h-3 rounded-full shrink-0"
+                          style={{ backgroundColor: cat.color }}
+                        ></div>
+                        {cat.name}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                  {cat.subcategories.map((sub) => (
+                    <TableRow
+                      key={`${cat.name}-${sub}`}
+                      className="hover:bg-muted/10 transition-colors"
+                    >
+                      <TableCell className="pl-8 text-muted-foreground font-medium text-sm border-r border-border/40 py-1.5">
+                        {sub}
+                      </TableCell>
+                      {months.map((m, idx) => {
+                        const key = `${cat.name}|${sub}|${selectedYear}-${m}`
+                        const val = budget[key]
+                        return (
+                          <TableCell key={m} className="p-1 border-r border-border/40 text-center">
+                            <Input
+                              type="number"
+                              value={val || ''}
+                              onChange={(e) =>
+                                handleBudgetChange(cat.name, sub, idx, e.target.value)
+                              }
+                              className="h-8 text-center bg-transparent border-transparent hover:border-input focus:border-primary focus:bg-background transition-all [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] text-sm font-medium"
+                              placeholder="0"
+                            />
                           </TableCell>
-                          <TableCell>
-                            <div className="flex items-center gap-2">
-                              <InstallmentBadge
-                                isInstallment={tx.isInstallment}
-                                current={tx.currentInstallment}
-                                total={tx.totalInstallments}
-                              />
-                              <span className="font-medium text-sm truncate">
-                                {tx.establishment}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {tx.primaryCategory}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold text-sm">
-                            {formatCurrency(tx.value)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
-      )}
+                        )
+                      })}
+                    </TableRow>
+                  ))}
+                </React.Fragment>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   )
 }
