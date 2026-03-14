@@ -9,7 +9,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  ResponsiveContainer,
   ReferenceLine,
 } from 'recharts'
 import { Activity, Info } from 'lucide-react'
@@ -110,66 +109,64 @@ export default function Insights() {
         </CardHeader>
         <CardContent className="p-6 min-h-[450px]">
           <ChartContainer config={chartConfig} className="h-[400px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid
-                  strokeDasharray="3 3"
-                  vertical={false}
-                  stroke="hsl(var(--border))"
-                  opacity={0.5}
-                />
-                <XAxis
-                  dataKey="day"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                  className="text-xs font-medium fill-muted-foreground"
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) =>
-                    `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
-                  }
-                  className="text-xs font-medium"
-                />
-                <Tooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                {currentGoal > 0 && (
-                  <ReferenceLine
-                    y={currentGoal}
-                    stroke="hsl(var(--destructive))"
-                    strokeDasharray="4 4"
-                    label={{
-                      position: 'insideTopLeft',
-                      value: 'Meta do Mês',
-                      fill: 'hsl(var(--destructive))',
-                      fontSize: 12,
-                      fontWeight: 600,
-                    }}
-                  />
-                )}
-                <Area
-                  type="monotone"
-                  dataKey="realizado"
-                  name="Realizado (Acumulado)"
-                  fill="var(--color-realizado)"
-                  stroke="var(--color-realizado)"
-                  strokeWidth={3}
-                  fillOpacity={0.2}
-                  connectNulls={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="projetado"
-                  name="Tendência Projetada"
-                  stroke="var(--color-projetado)"
-                  strokeWidth={2}
+            <ComposedChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                vertical={false}
+                stroke="hsl(var(--border))"
+                opacity={0.5}
+              />
+              <XAxis
+                dataKey="day"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                className="text-xs font-medium fill-muted-foreground"
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) =>
+                  `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
+                }
+                className="text-xs font-medium"
+              />
+              <Tooltip content={<ChartTooltipContent />} />
+              <ChartLegend content={<ChartLegendContent />} />
+              {currentGoal > 0 && (
+                <ReferenceLine
+                  y={currentGoal}
+                  stroke="hsl(var(--destructive))"
                   strokeDasharray="4 4"
-                  dot={false}
+                  label={{
+                    position: 'insideTopLeft',
+                    value: 'Meta do Mês',
+                    fill: 'hsl(var(--destructive))',
+                    fontSize: 12,
+                    fontWeight: 600,
+                  }}
                 />
-              </ComposedChart>
-            </ResponsiveContainer>
+              )}
+              <Area
+                type="monotone"
+                dataKey="realizado"
+                name="Realizado (Acumulado)"
+                fill="var(--color-realizado)"
+                stroke="var(--color-realizado)"
+                strokeWidth={3}
+                fillOpacity={0.2}
+                connectNulls={false}
+              />
+              <Line
+                type="monotone"
+                dataKey="projetado"
+                name="Tendência Projetada"
+                stroke="var(--color-projetado)"
+                strokeWidth={2}
+                strokeDasharray="4 4"
+                dot={false}
+              />
+            </ComposedChart>
           </ChartContainer>
         </CardContent>
       </Card>

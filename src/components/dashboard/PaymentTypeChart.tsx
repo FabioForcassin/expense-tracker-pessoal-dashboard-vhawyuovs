@@ -1,14 +1,4 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
@@ -52,48 +42,46 @@ export function PaymentTypeChart() {
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={rawData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="3 3"
-                  stroke="hsl(var(--border))"
-                  opacity={0.5}
+            <BarChart data={rawData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+              <CartesianGrid
+                vertical={false}
+                strokeDasharray="3 3"
+                stroke="hsl(var(--border))"
+                opacity={0.5}
+              />
+              <XAxis
+                dataKey="name"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                className="text-xs font-medium fill-muted-foreground"
+                tickFormatter={(val) => (val.length > 10 ? val.substring(0, 10) + '...' : val)}
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) => formatCurrencyK(value)}
+                className="text-xs font-medium"
+              />
+              <Tooltip
+                content={
+                  <ChartTooltipContent formatter={(value) => formatCurrencyK(value as number)} />
+                }
+                cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+              />
+              <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48}>
+                {rawData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                ))}
+                <LabelList
+                  dataKey="value"
+                  position="top"
+                  formatter={(val: number) => (val > 0 ? formatCurrencyK(val) : '')}
+                  className="fill-foreground font-semibold text-[10px]"
+                  offset={4}
                 />
-                <XAxis
-                  dataKey="name"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                  className="text-xs font-medium fill-muted-foreground"
-                  tickFormatter={(val) => (val.length > 10 ? val.substring(0, 10) + '...' : val)}
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => formatCurrencyK(value)}
-                  className="text-xs font-medium"
-                />
-                <Tooltip
-                  content={
-                    <ChartTooltipContent formatter={(value) => formatCurrencyK(value as number)} />
-                  }
-                  cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
-                />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={48}>
-                  {rawData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                  <LabelList
-                    dataKey="value"
-                    position="top"
-                    formatter={(val: number) => (val > 0 ? formatCurrencyK(val) : '')}
-                    className="fill-foreground font-semibold text-[10px]"
-                    offset={4}
-                  />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+              </Bar>
+            </BarChart>
           </ChartContainer>
         )}
       </CardContent>

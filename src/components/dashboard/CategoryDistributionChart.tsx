@@ -1,14 +1,4 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-  LabelList,
-} from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Cell, LabelList } from 'recharts'
 import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
@@ -91,57 +81,52 @@ export function CategoryDistributionChart() {
       </CardHeader>
       <CardContent className="flex-1 min-h-[300px] w-full mt-2 pr-6">
         <ChartContainer config={chartConfig} className="h-full w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={data}
-              layout="vertical"
-              margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid
-                strokeDasharray="3 3"
-                horizontal={true}
-                vertical={false}
-                stroke="hsl(var(--border))"
-                opacity={0.4}
+          <BarChart
+            data={data}
+            layout="vertical"
+            margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
+          >
+            <CartesianGrid
+              strokeDasharray="3 3"
+              horizontal={true}
+              vertical={false}
+              stroke="hsl(var(--border))"
+              opacity={0.4}
+            />
+            <XAxis type="number" hide />
+            <YAxis
+              dataKey="name"
+              type="category"
+              width={100}
+              tickLine={false}
+              axisLine={false}
+              className="text-xs font-medium"
+              tick={{ fill: 'hsl(var(--foreground))' }}
+            />
+            <Tooltip content={<ChartTooltipContent />} cursor={{ fill: 'hsl(var(--muted)/0.3)' }} />
+            <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} />
+              ))}
+              {/* Percentage strictly inside */}
+              <LabelList
+                dataKey="percentage"
+                position="inside"
+                fill="#ffffff"
+                formatter={(val: number) => `${val.toFixed(1)}%`}
+                className="font-bold text-[11px]"
               />
-              <XAxis type="number" hide />
-              <YAxis
-                dataKey="name"
-                type="category"
-                width={100}
-                tickLine={false}
-                axisLine={false}
-                className="text-xs font-medium"
-                tick={{ fill: 'hsl(var(--foreground))' }}
+              {/* Absolute value strictly outside right */}
+              <LabelList
+                dataKey="value"
+                position="right"
+                fill="hsl(var(--foreground))"
+                formatter={(val: number) => formatCurrency(val)}
+                className="font-semibold text-xs"
+                offset={12}
               />
-              <Tooltip
-                content={<ChartTooltipContent />}
-                cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
-              />
-              <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={32}>
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-                {/* Percentage strictly inside */}
-                <LabelList
-                  dataKey="percentage"
-                  position="inside"
-                  fill="#ffffff"
-                  formatter={(val: number) => `${val.toFixed(1)}%`}
-                  className="font-bold text-[11px]"
-                />
-                {/* Absolute value strictly outside right */}
-                <LabelList
-                  dataKey="value"
-                  position="right"
-                  fill="hsl(var(--foreground))"
-                  formatter={(val: number) => formatCurrency(val)}
-                  className="font-semibold text-xs"
-                  offset={12}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+            </Bar>
+          </BarChart>
         </ChartContainer>
       </CardContent>
     </Card>

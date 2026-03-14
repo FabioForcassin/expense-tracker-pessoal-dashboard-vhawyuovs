@@ -1,14 +1,4 @@
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  LabelList,
-  Legend,
-} from 'recharts'
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, LabelList, Legend } from 'recharts'
 import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart'
@@ -59,57 +49,52 @@ export function YearlyHistoryChart() {
       </CardHeader>
       <CardContent className="flex-1 min-h-[300px] w-full mt-2">
         <ChartContainer config={chartConfig} className="h-full w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
-              <CartesianGrid
-                vertical={false}
-                strokeDasharray="3 3"
-                stroke="hsl(var(--border))"
-                opacity={0.5}
-              />
-              <XAxis
-                dataKey="year"
-                tickLine={false}
-                axisLine={false}
-                tickMargin={10}
-                className="text-sm font-medium fill-muted-foreground"
-              />
-              <YAxis hide domain={['auto', 'auto']} />
-              <Tooltip
-                content={<ChartTooltipContent />}
-                cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
-              />
-              <Legend content={<ChartLegendContent />} />
-              <Bar
+          <BarChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              stroke="hsl(var(--border))"
+              opacity={0.5}
+            />
+            <XAxis
+              dataKey="year"
+              tickLine={false}
+              axisLine={false}
+              tickMargin={10}
+              className="text-sm font-medium fill-muted-foreground"
+            />
+            <YAxis hide domain={['auto', 'auto']} />
+            <Tooltip content={<ChartTooltipContent />} cursor={{ fill: 'hsl(var(--muted)/0.3)' }} />
+            <Legend content={<ChartLegendContent />} />
+            <Bar
+              dataKey="realizado"
+              fill="var(--color-realizado)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={40}
+            >
+              <LabelList
                 dataKey="realizado"
-                fill="var(--color-realizado)"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={40}
-              >
-                <LabelList
-                  dataKey="realizado"
-                  position="top"
-                  formatter={formatK}
-                  className="fill-foreground font-semibold text-xs"
-                  offset={6}
-                />
-              </Bar>
-              <Bar
+                position="top"
+                formatter={formatK}
+                className="fill-foreground font-semibold text-xs"
+                offset={6}
+              />
+            </Bar>
+            <Bar
+              dataKey="orcamento"
+              fill="var(--color-orcamento)"
+              radius={[4, 4, 0, 0]}
+              maxBarSize={40}
+            >
+              <LabelList
                 dataKey="orcamento"
-                fill="var(--color-orcamento)"
-                radius={[4, 4, 0, 0]}
-                maxBarSize={40}
-              >
-                <LabelList
-                  dataKey="orcamento"
-                  position="top"
-                  formatter={formatK}
-                  className="fill-foreground font-semibold text-xs"
-                  offset={6}
-                />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
+                position="top"
+                formatter={formatK}
+                className="fill-foreground font-semibold text-xs"
+                offset={6}
+              />
+            </Bar>
+          </BarChart>
         </ChartContainer>
       </CardContent>
     </Card>

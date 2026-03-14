@@ -1,12 +1,4 @@
-import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-} from 'recharts'
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip } from 'recharts'
 import { useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
@@ -68,52 +60,50 @@ export function TrendChart() {
           </div>
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-avgDaily)" stopOpacity={0.3} />
-                    <stop offset="95%" stopColor="var(--color-avgDaily)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid
-                  vertical={false}
-                  strokeDasharray="3 3"
-                  stroke="hsl(var(--border))"
-                  opacity={0.5}
-                />
-                <XAxis
-                  dataKey="name"
-                  tickLine={false}
-                  axisLine={false}
-                  tickMargin={10}
-                  className="text-xs font-medium fill-muted-foreground"
-                />
-                <YAxis
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) =>
-                    `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
-                  }
-                  className="text-xs font-medium"
-                />
-                <Tooltip content={<ChartTooltipContent />} />
-                <Area
-                  type="monotone"
-                  dataKey="avgDaily"
-                  stroke="var(--color-avgDaily)"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorAvg)"
-                  activeDot={{
-                    r: 6,
-                    fill: 'var(--color-avgDaily)',
-                    stroke: 'hsl(var(--background))',
-                    strokeWidth: 2,
-                  }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorAvg" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="var(--color-avgDaily)" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="var(--color-avgDaily)" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid
+                vertical={false}
+                strokeDasharray="3 3"
+                stroke="hsl(var(--border))"
+                opacity={0.5}
+              />
+              <XAxis
+                dataKey="name"
+                tickLine={false}
+                axisLine={false}
+                tickMargin={10}
+                className="text-xs font-medium fill-muted-foreground"
+              />
+              <YAxis
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={(value) =>
+                  `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
+                }
+                className="text-xs font-medium"
+              />
+              <Tooltip content={<ChartTooltipContent />} />
+              <Area
+                type="monotone"
+                dataKey="avgDaily"
+                stroke="var(--color-avgDaily)"
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorAvg)"
+                activeDot={{
+                  r: 6,
+                  fill: 'var(--color-avgDaily)',
+                  stroke: 'hsl(var(--background))',
+                  strokeWidth: 2,
+                }}
+              />
+            </AreaChart>
           </ChartContainer>
         )}
       </CardContent>
