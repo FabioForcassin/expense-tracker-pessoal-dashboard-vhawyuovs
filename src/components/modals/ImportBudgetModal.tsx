@@ -67,7 +67,11 @@ export function ImportDataModal({
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault()
     const valid = Array.from(e.dataTransfer.files).filter((f) => f.name.match(/\.(csv|xlsx|xls)$/i))
-    valid.length ? setFiles((p) => [...p, ...valid]) : toast.error('Apenas arquivos .csv ou .xlsx')
+    if (valid.length) {
+      setFiles((p) => [...p, ...valid])
+    } else {
+      toast.error('Apenas arquivos .csv ou .xlsx')
+    }
   }
 
   const handleImport = async () => {
