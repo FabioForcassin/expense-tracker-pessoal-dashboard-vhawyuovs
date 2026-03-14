@@ -14,6 +14,8 @@ export interface Expense {
   who: string // Quem
 }
 
+export type BudgetStore = Record<string, number> // Format: "categoryName|subcategoryName|YYYY-MM": value
+
 export interface Budget {
   [categoryName: string]: number
 }

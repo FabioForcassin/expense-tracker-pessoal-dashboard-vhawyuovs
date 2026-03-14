@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, FileText, Settings, Wallet } from 'lucide-react'
+import { LayoutDashboard, FileText, Settings, Wallet, Database } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +17,7 @@ export function AppSidebar() {
 
   const items = [
     { title: 'Dashboard', url: '/', icon: LayoutDashboard },
+    { title: 'Banco de Dados', url: '/database', icon: Database },
     { title: 'Relatórios', url: '/reports', icon: FileText },
     { title: 'Configurações', url: '/settings', icon: Settings },
   ]

@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, ReactNode } from 'react'
-import { Expense, AppCategory } from '@/types'
+import { Expense, AppCategory, BudgetStore } from '@/types'
 
 export const INITIAL_CATEGORIES: AppCategory[] = [
   {
@@ -389,9 +389,26 @@ const INITIAL_EXPENSES: Expense[] = [
   },
 ]
 
+// Generate an initial default budget
+const generateInitialBudget = (): BudgetStore => {
+  const budget: BudgetStore = {}
+  INITIAL_CATEGORIES.forEach((cat) => {
+    cat.subcategories.forEach((sub) => {
+      // Default to 15000 for total monthly recipes and some small values for expenses
+      const defaultVal = cat.name === 'Receitas' ? 2500 : 250
+      for (let month = 1; month <= 12; month++) {
+        const monthStr = month.toString().padStart(2, '0')
+        budget[`${cat.name}|${sub}|2024-${monthStr}`] = defaultVal
+      }
+    })
+  })
+  return budget
+}
+
 interface DashboardContextType {
   categories: AppCategory[]
   expenses: Expense[]
+  budget: BudgetStore
   selectedMonths: string[]
   setSelectedMonths: (m: string[]) => void
   selectedPrimaryCat: string | null
@@ -399,6 +416,8 @@ interface DashboardContextType {
   selectedSecondaryCats: string[]
   toggleSecondaryCat: (name: string) => void
   addExpense: (e: Omit<Expense, 'id'>) => void
+  updateBudget: (key: string, value: number) => void
+  bulkImportData: (type: 'realizado' | 'orcamento', year: string) => void
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined)
@@ -406,6 +425,7 @@ const DashboardContext = createContext<DashboardContextType | undefined>(undefin
 export function DashboardProvider({ children }: { children: ReactNode }) {
   const [categories] = useState<AppCategory[]>(INITIAL_CATEGORIES)
   const [expenses, setExpenses] = useState<Expense[]>(INITIAL_EXPENSES)
+  const [budget, setBudget] = useState<BudgetStore>(generateInitialBudget())
   const [selectedMonths, setSelectedMonths] = useState<string[]>(['2024-03'])
   const [selectedPrimaryCat, setSelectedPrimaryCat] = useState<string | null>(null)
   const [selectedSecondaryCats, setSelectedSecondaryCats] = useState<string[]>([])
@@ -426,11 +446,65 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     setExpenses((prev) => [...prev, newExpense])
   }
 
+  const updateBudget = (key: string, value: number) => {
+    setBudget((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const bulkImportData = (type: 'realizado' | 'orcamento', year: string) => {
+    if (type === 'realizado') {
+      const newExpenses: Expense[] = []
+      const numExpenses = 120 // generate random transactions across the year
+      const methods = ['Itaú', 'Nubank', 'CC Itaú visa infinity', 'Santander']
+
+      for (let i = 0; i < numExpenses; i++) {
+        const m = Math.floor(Math.random() * 12) + 1
+        const d = Math.floor(Math.random() * 28) + 1
+        const date = `${year}-${m.toString().padStart(2, '0')}-${d.toString().padStart(2, '0')}`
+        const isReceita = Math.random() > 0.85
+
+        let cat = categories.find((c) => c.name === 'Receitas')!
+        if (!isReceita) {
+          const expCats = categories.filter((c) => c.name !== 'Receitas')
+          cat = expCats[Math.floor(Math.random() * expCats.length)]
+        }
+        const sub = cat.subcategories[Math.floor(Math.random() * cat.subcategories.length)]
+        const val = isReceita ? Math.random() * 8000 + 2000 : Math.random() * 600 + 20
+
+        newExpenses.push({
+          id: `imp_${Date.now()}_${i}`,
+          date,
+          monthNum: m,
+          competency: m.toString().padStart(2, '0'),
+          establishment: isReceita ? 'Cliente/Empresa' : `Estabelecimento ${i}`,
+          primaryCategory: cat.name,
+          secondaryCategory: sub,
+          type: isReceita ? 'Receita' : Math.random() > 0.5 ? 'Fixa' : 'Variável',
+          paymentMethod: methods[Math.floor(Math.random() * methods.length)],
+          value: parseFloat(val.toFixed(2)),
+          comment: 'Importado',
+          classification: 'Pessoal',
+          who: 'Fabio',
+        })
+      }
+      setExpenses((prev) => [...prev, ...newExpenses])
+    } else {
+      // Simulate budget update logic with +/- 30% variation
+      const newBudget = { ...budget }
+      Object.keys(newBudget).forEach((k) => {
+        if (k.includes(`|${year}-`)) {
+          newBudget[k] = parseFloat((newBudget[k] * (1 + (Math.random() * 0.6 - 0.3))).toFixed(2))
+        }
+      })
+      setBudget(newBudget)
+    }
+  }
+
   return (
     <DashboardContext.Provider
       value={{
         categories,
         expenses,
+        budget,
         selectedMonths,
         setSelectedMonths,
         selectedPrimaryCat,
@@ -438,6 +512,8 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         selectedSecondaryCats,
         toggleSecondaryCat,
         addExpense,
+        updateBudget,
+        bulkImportData,
       }}
     >
       {children}

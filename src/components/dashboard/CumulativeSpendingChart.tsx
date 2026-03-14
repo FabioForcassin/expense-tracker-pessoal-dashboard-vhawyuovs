@@ -58,7 +58,7 @@ export function CumulativeSpendingChart() {
           Evolução do Gasto (30 Dias)
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex-1 w-full min-h-[280px] mt-4 pb-2">
+      <CardContent className="flex-1 w-full min-h-[350px] mt-4 pb-2">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>

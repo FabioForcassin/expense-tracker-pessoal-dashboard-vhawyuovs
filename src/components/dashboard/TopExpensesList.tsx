@@ -23,23 +23,24 @@ export function TopExpensesList() {
     }
   }
 
-  const topExpenses = [...filteredExpenses].sort((a, b) => b.value - a.value).slice(0, 6)
+  // Expanded to 15 top expenses
+  const topExpenses = [...filteredExpenses].sort((a, b) => b.value - a.value).slice(0, 15)
 
   return (
     <Card className="glass h-full flex flex-col">
       <CardHeader className="pb-2 border-b border-border/40">
         <CardTitle className="text-base font-semibold flex items-center gap-2">
           <Trophy className="w-4 h-4 text-amber-500" />
-          Maiores Despesas
+          Maiores Despesas (Top 15)
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex-1">
         {topExpenses.length === 0 ? (
-          <div className="flex items-center justify-center h-[280px]">
+          <div className="flex items-center justify-center h-[350px]">
             <p className="text-muted-foreground text-sm">Sem despesas no período.</p>
           </div>
         ) : (
-          <ScrollArea className="h-[280px]">
+          <ScrollArea className="h-[350px]">
             <div className="flex flex-col">
               {topExpenses.map((expense, i) => (
                 <div

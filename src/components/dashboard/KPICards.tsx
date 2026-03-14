@@ -6,8 +6,14 @@ import { formatCurrency } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 export function KPICards() {
-  const { expenses, selectedMonths, selectedPrimaryCat, categories, selectedSecondaryCats } =
-    useDashboard()
+  const {
+    expenses,
+    selectedMonths,
+    selectedPrimaryCat,
+    categories,
+    selectedSecondaryCats,
+    budget,
+  } = useDashboard()
 
   let filteredTransactions = expenses.filter((e) =>
     selectedMonths.some((m) => e.date.startsWith(m)),
@@ -24,24 +30,28 @@ export function KPICards() {
     }
   }
 
-  const totalReceitas =
-    expenses
-      .filter(
-        (e) => selectedMonths.some((m) => e.date.startsWith(m)) && e.primaryCategory === 'Receitas',
-      )
-      .reduce((acc, e) => acc + e.value, 0) || 15000
-
   const totalDespesas = filteredTransactions
     .filter((e) => e.primaryCategory !== 'Receitas')
     .reduce((acc, e) => acc + e.value, 0)
 
-  let orcadoGlobal = totalReceitas * 0.8
-  if (selectedPrimaryCat && selectedPrimaryCat !== 'cat_receitas') {
-    orcadoGlobal = totalReceitas * 0.2
-    if (selectedSecondaryCats.length > 0) {
-      orcadoGlobal = totalReceitas * 0.05
-    }
-  }
+  // Calculate actual budget from the grid
+  let orcadoGlobal = 0
+
+  selectedMonths.forEach((month) => {
+    categories.forEach((cat) => {
+      // Typically budget KPI measures expenses, skip 'Receitas' unless specifically requested
+      if (cat.name === 'Receitas') return
+
+      if (selectedPrimaryCat && cat.id !== selectedPrimaryCat) return
+
+      cat.subcategories.forEach((sub) => {
+        if (selectedSecondaryCats.length > 0 && !selectedSecondaryCats.includes(sub)) return
+
+        const key = `${cat.name}|${sub}|${month}`
+        orcadoGlobal += budget[key] || 0
+      })
+    })
+  })
 
   const saldo = orcadoGlobal - totalDespesas
   const progressPerc = orcadoGlobal > 0 ? (totalDespesas / orcadoGlobal) * 100 : 0

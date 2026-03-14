@@ -19,6 +19,7 @@ import {
 import { UploadCloud, FileSpreadsheet } from 'lucide-react'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useDashboard } from '@/stores/DashboardContext'
 
 interface ImportDataModalProps {
   open: boolean
@@ -26,6 +27,7 @@ interface ImportDataModalProps {
 }
 
 export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
+  const { bulkImportData } = useDashboard()
   const [files, setFiles] = useState<File[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [importType, setImportType] = useState<'realizado' | 'orcamento'>('realizado')
@@ -54,6 +56,7 @@ export function ImportDataModal({ open, onOpenChange }: ImportDataModalProps) {
     if (files.length === 0) return
     setIsProcessing(true)
     setTimeout(() => {
+      bulkImportData(importType, year)
       toast.success(`Lote de dados (${importType} - ${year}) importado com sucesso!`)
       setFiles([])
       setIsProcessing(false)
