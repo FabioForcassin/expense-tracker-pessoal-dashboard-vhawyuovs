@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useDashboard } from '@/stores/DashboardContext'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -19,10 +19,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
-import { Target } from 'lucide-react'
+import { Target, Info } from 'lucide-react'
 
 export default function Predictability() {
-  const { categories, budget, updateBudget, selectedYear, setSelectedYear } = useDashboard()
+  const { categories, budget, updateBudget, selectedYear, setSelectedYear, expenses } =
+    useDashboard()
   const [autoReplicate, setAutoReplicate] = useState(true)
 
   const months = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']
@@ -41,22 +42,40 @@ export default function Predictability() {
     'Dez',
   ]
 
+  // Pre-calculate sums for items with active credit card installments
+  const installmentsByCell = useMemo(() => {
+    const map: Record<string, number> = {}
+    expenses
+      .filter((e) => e.isInstallment && e.date.startsWith(selectedYear))
+      .forEach((e) => {
+        const monthStr = e.date.substring(0, 7)
+        const key = `${e.primaryCategory}|${e.secondaryCategory}|${monthStr}`
+        map[key] = (map[key] || 0) + e.value
+      })
+    return map
+  }, [expenses, selectedYear])
+
   const handleBudgetChange = (
     catName: string,
     subName: string,
     monthIdx: number,
     value: string,
   ) => {
-    const numValue = parseFloat(value) || 0
+    const rawVal = parseFloat(value) || 0
 
     if (autoReplicate) {
       for (let i = monthIdx; i < 12; i++) {
-        const key = `${catName}|${subName}|${selectedYear}-${months[i]}`
-        updateBudget(key, numValue)
+        const monthStr = months[i]
+        const key = `${catName}|${subName}|${selectedYear}-${monthStr}`
+        const instSum = installmentsByCell[key] || 0
+        // We store the user's intended value minus the fixed installment, so they sum up perfectly
+        updateBudget(key, rawVal - instSum)
       }
     } else {
-      const key = `${catName}|${subName}|${selectedYear}-${months[monthIdx]}`
-      updateBudget(key, numValue)
+      const monthStr = months[monthIdx]
+      const key = `${catName}|${subName}|${selectedYear}-${monthStr}`
+      const instSum = installmentsByCell[key] || 0
+      updateBudget(key, rawVal - instSum)
     }
   }
 
@@ -78,7 +97,8 @@ export default function Predictability() {
             Orçamento (Previsibilidade)
           </h2>
           <p className="text-muted-foreground text-sm mt-2">
-            Planeje suas receitas e despesas. Insira os valores esperados para cada mês do ano.
+            Planeje suas receitas e despesas. Valores exibem a soma automática das suas parcelas
+            cadastradas.
           </p>
         </div>
 
@@ -157,18 +177,30 @@ export default function Predictability() {
                       </TableCell>
                       {months.map((m, idx) => {
                         const key = `${cat.name}|${sub}|${selectedYear}-${m}`
-                        const val = budget[key]
+                        const instSum = installmentsByCell[key] || 0
+                        const budgetVal = budget[key] || 0
+                        const displayVal = budgetVal + instSum
+
                         return (
-                          <TableCell key={m} className="p-1 border-r border-border/40 text-center">
+                          <TableCell
+                            key={m}
+                            className="p-1 border-r border-border/40 text-center relative group"
+                          >
                             <Input
                               type="number"
-                              value={val || ''}
+                              value={displayVal === 0 ? '' : displayVal.toFixed(2)}
                               onChange={(e) =>
                                 handleBudgetChange(cat.name, sub, idx, e.target.value)
                               }
-                              className="h-8 text-center bg-transparent border-transparent hover:border-input focus:border-primary focus:bg-background transition-all [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] text-sm font-medium"
+                              className="h-8 text-center bg-transparent border-transparent hover:border-input focus:border-primary focus:bg-background transition-all [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield] text-sm font-medium w-full"
                               placeholder="0"
                             />
+                            {instSum > 0 && (
+                              <div
+                                className="absolute top-0 right-0 w-2 h-2 rounded-full bg-blue-500 m-1 opacity-60"
+                                title={`Inclui parcelas: ${instSum.toFixed(2)}`}
+                              />
+                            )}
                           </TableCell>
                         )
                       })}

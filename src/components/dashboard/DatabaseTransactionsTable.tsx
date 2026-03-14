@@ -7,9 +7,19 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,17 +33,30 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { formatCurrency, formatDate } from '@/lib/format'
-import { ArrowDownRight, ArrowUpRight, Database, Trash2 } from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight, Database, Trash2, Filter } from 'lucide-react'
 import { toast } from 'sonner'
 import { InstallmentBadge } from '@/components/shared/InstallmentBadge'
 
 export function DatabaseTransactionsTable() {
-  const { deleteExpenses } = useDashboard()
+  const { deleteExpenses, categories } = useDashboard()
 
   const filteredDataRaw = useFilteredExpenses(true)
-  const filteredData = [...filteredDataRaw].sort(
-    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-  )
+
+  // Advanced Grid Filters
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
+  const [catFilter, setCatFilter] = useState('all')
+  const [subFilter, setSubFilter] = useState('all')
+
+  const filteredData = [...filteredDataRaw]
+    .filter((tx) => {
+      if (dateFrom && tx.date < dateFrom) return false
+      if (dateTo && tx.date > dateTo) return false
+      if (catFilter !== 'all' && tx.primaryCategory !== catFilter) return false
+      if (subFilter !== 'all' && tx.secondaryCategory !== subFilter) return false
+      return true
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [isDeleting, setIsDeleting] = useState(false)
@@ -51,11 +74,8 @@ export function DatabaseTransactionsTable() {
   }
 
   const handleSelectRow = (checked: boolean, id: string) => {
-    if (checked) {
-      setSelectedIds([...selectedIds, id])
-    } else {
-      setSelectedIds(selectedIds.filter((item) => item !== id))
-    }
+    if (checked) setSelectedIds([...selectedIds, id])
+    else setSelectedIds(selectedIds.filter((item) => item !== id))
   }
 
   const openDeleteDialog = (id?: string) => {
@@ -92,34 +112,108 @@ export function DatabaseTransactionsTable() {
     filteredData.length > 0 && filteredData.every((d) => selectedIds.includes(d.id))
 
   return (
-    <Card className="glass mt-4 flex flex-col">
-      <CardHeader className="pb-4 border-b border-border/40">
+    <Card className="glass mt-4 flex flex-col flex-1 min-h-0">
+      <CardHeader className="pb-4 border-b border-border/40 shrink-0">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <CardTitle className="text-base font-semibold flex items-center gap-2">
             <Database className="w-5 h-5 text-primary" />
-            Gerenciamento de Registros
+            Gerenciamento de Registros (Realizado)
           </CardTitle>
           <div className="flex items-center gap-4">
             {selectedIds.length > 0 && (
               <Button variant="destructive" size="sm" onClick={() => openDeleteDialog()}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                Excluir ({selectedIds.length})
+                <Trash2 className="w-4 h-4 mr-2" /> Excluir ({selectedIds.length})
               </Button>
             )}
-            <div
-              className={`px-3 py-1.5 font-semibold text-sm rounded-md border ${netSubtotal >= 0 ? 'bg-success/10 text-success border-success/20' : 'bg-destructive/10 text-destructive border-destructive/20'}`}
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-4 bg-muted/30 p-4 rounded-lg mt-4 border border-border/50">
+          <div className="flex items-center gap-2 w-full mb-1">
+            <Filter className="w-4 h-4 text-muted-foreground" />
+            <span className="text-sm font-semibold text-foreground">Filtros Avançados</span>
+          </div>
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+            <Label className="text-xs">Data Inicial</Label>
+            <Input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-8 text-xs"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto">
+            <Label className="text-xs">Data Final</Label>
+            <Input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-8 text-xs"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1 min-w-[150px]">
+            <Label className="text-xs">Categoria</Label>
+            <Select
+              value={catFilter}
+              onValueChange={(v) => {
+                setCatFilter(v)
+                setSubFilter('all')
+              }}
             >
-              Subtotal: {netSubtotal > 0 ? '+' : ''}
-              {formatCurrency(netSubtotal)}
-            </div>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {categories.map((c) => (
+                  <SelectItem key={c.id} value={c.name}>
+                    {c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex flex-col gap-1.5 w-full sm:w-auto flex-1 min-w-[150px]">
+            <Label className="text-xs">Subcategoria</Label>
+            <Select value={subFilter} onValueChange={setSubFilter}>
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                {catFilter !== 'all' &&
+                  categories
+                    .find((c) => c.name === catFilter)
+                    ?.subcategories.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {s}
+                      </SelectItem>
+                    ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-end ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setDateFrom('')
+                setDateTo('')
+                setCatFilter('all')
+                setSubFilter('all')
+              }}
+              className="h-8 text-xs"
+            >
+              Limpar Filtros
+            </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="p-0 sm:p-6 sm:pt-4 overflow-x-auto flex flex-col gap-4">
-        {/* Table */}
-        <div className="border rounded-md shadow-sm overflow-hidden">
+
+      <CardContent className="p-0 overflow-hidden flex-1 flex flex-col relative min-h-0">
+        <div className="overflow-auto flex-1">
           <Table className="min-w-[900px] text-sm">
-            <TableHeader className="bg-muted/50">
+            <TableHeader className="bg-muted/50 sticky top-0 z-10 shadow-sm">
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[40px] text-center">
                   <Checkbox checked={isAllSelected} onCheckedChange={handleSelectAll} />
@@ -194,8 +288,7 @@ export function DatabaseTransactionsTable() {
                       <TableCell
                         className={`text-right font-semibold whitespace-nowrap ${isIncome ? 'text-success' : 'text-foreground'}`}
                       >
-                        {isIncome ? '+' : '-'}
-                        {formatCurrency(tx.value)}
+                        {isIncome ? '+' : '-'} {formatCurrency(tx.value)}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
@@ -212,6 +305,20 @@ export function DatabaseTransactionsTable() {
                 })
               )}
             </TableBody>
+            <TableFooter className="sticky bottom-0 bg-muted/90 backdrop-blur z-10 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] border-t">
+              <TableRow>
+                <TableCell colSpan={7} className="text-right font-bold text-foreground">
+                  Subtotal dos Registros Visíveis:
+                </TableCell>
+                <TableCell
+                  className={`text-right font-bold whitespace-nowrap ${netSubtotal >= 0 ? 'text-success' : 'text-destructive'}`}
+                >
+                  {netSubtotal > 0 ? '+' : ''}
+                  {formatCurrency(netSubtotal)}
+                </TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableFooter>
           </Table>
         </div>
       </CardContent>

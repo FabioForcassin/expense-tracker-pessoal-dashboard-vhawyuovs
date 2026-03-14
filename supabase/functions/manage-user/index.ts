@@ -20,8 +20,54 @@ Deno.serve(async (req: Request) => {
     })
 
     const body = await req.json()
-    const { action, userId, isActive } = body
+    const { action, userId, isActive, email, password, role } = body
 
+    // 1. Create User with Password directly
+    if (action === 'create') {
+      if (!email || !password) {
+        return new Response(JSON.stringify({ error: 'Email e senha são obrigatórios.' }), {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const { data, error } = await supabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+      })
+
+      if (error) throw error
+
+      if (data?.user?.id && role) {
+        await supabase.from('profiles').update({ role }).eq('id', data.user.id)
+      }
+
+      return new Response(JSON.stringify({ success: true, user: data.user }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // 2. Reset Password for User
+    if (action === 'update_password') {
+      if (!userId || !password) {
+        return new Response(
+          JSON.stringify({ error: 'ID do usuário e nova senha são obrigatórios.' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        )
+      }
+
+      const { error } = await supabase.auth.admin.updateUserById(userId, { password })
+      if (error) throw error
+
+      return new Response(JSON.stringify({ success: true }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    // Require userId for the following actions
     if (!userId) {
       return new Response(JSON.stringify({ error: 'O ID do usuário é obrigatório.' }), {
         status: 400,
@@ -29,6 +75,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    // 3. Delete User
     if (action === 'delete') {
       const { error } = await supabase.auth.admin.deleteUser(userId)
       if (error) throw error
@@ -38,6 +85,7 @@ Deno.serve(async (req: Request) => {
       })
     }
 
+    // 4. Toggle Status
     if (action === 'toggle_status') {
       const { error } = await supabase
         .from('profiles')

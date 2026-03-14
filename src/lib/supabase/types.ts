@@ -161,18 +161,21 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          is_active: boolean
           role: string
         }
         Insert: {
           created_at?: string
           email: string
           id: string
+          is_active?: boolean
           role?: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          is_active?: boolean
           role?: string
         }
         Relationships: []
@@ -211,6 +214,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      is_active_user: { Args: never; Returns: boolean }
       is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
@@ -399,6 +403,7 @@ export const Constants = {
 //   email: text (not null)
 //   role: text (not null, default: 'user'::text)
 //   created_at: timestamp with time zone (not null, default: now())
+//   is_active: boolean (not null, default: true)
 // Table: subcategories
 //   id: uuid (not null, default: gen_random_uuid())
 //   category_id: uuid (not null)
@@ -429,32 +434,30 @@ export const Constants = {
 // --- ROW LEVEL SECURITY POLICIES ---
 // Table: categories
 //   Policy "Categories access policy" (ALL, PERMISSIVE) roles={public}
-//     USING: ((auth.uid() = user_id) OR is_admin())
-//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
+//     USING: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
+//     WITH CHECK: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
 // Table: expenses
 //   Policy "Expenses access policy" (ALL, PERMISSIVE) roles={public}
-//     USING: ((auth.uid() = user_id) OR is_admin())
-//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
+//     USING: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
+//     WITH CHECK: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
 // Table: goals
 //   Policy "Goals access policy" (ALL, PERMISSIVE) roles={public}
-//     USING: ((auth.uid() = user_id) OR is_admin())
-//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
+//     USING: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
+//     WITH CHECK: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
 // Table: payment_methods
 //   Policy "Payment methods access policy" (ALL, PERMISSIVE) roles={public}
-//     USING: ((auth.uid() = user_id) OR is_admin())
-//     WITH CHECK: ((auth.uid() = user_id) OR is_admin())
+//     USING: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
+//     WITH CHECK: ((is_active_user() AND (auth.uid() = user_id)) OR is_admin())
 // Table: profiles
-//   Policy "Enable read for admins" (SELECT, PERMISSIVE) roles={public}
-//     USING: is_admin()
-//   Policy "Enable read for users based on user_id" (SELECT, PERMISSIVE) roles={public}
-//     USING: (auth.uid() = id)
-//   Policy "Enable update for admins" (UPDATE, PERMISSIVE) roles={public}
-//     USING: is_admin()
-//     WITH CHECK: is_admin()
+//   Policy "Enable read for all" (SELECT, PERMISSIVE) roles={public}
+//     USING: ((auth.uid() = id) OR is_admin())
+//   Policy "Enable update for active users and admins" (UPDATE, PERMISSIVE) roles={public}
+//     USING: ((is_active_user() AND (auth.uid() = id)) OR is_admin())
+//     WITH CHECK: ((is_active_user() AND (auth.uid() = id)) OR is_admin())
 // Table: subcategories
 //   Policy "Subcategories access policy" (ALL, PERMISSIVE) roles={public}
-//     USING: (category_id IN ( SELECT categories.id    FROM categories   WHERE ((categories.user_id = auth.uid()) OR is_admin())))
-//     WITH CHECK: (category_id IN ( SELECT categories.id    FROM categories   WHERE ((categories.user_id = auth.uid()) OR is_admin())))
+//     USING: ((is_active_user() AND (category_id IN ( SELECT categories.id    FROM categories   WHERE (categories.user_id = auth.uid())))) OR is_admin())
+//     WITH CHECK: ((is_active_user() AND (category_id IN ( SELECT categories.id    FROM categories   WHERE (categories.user_id = auth.uid())))) OR is_admin())
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION handle_new_user()
@@ -468,6 +471,19 @@ export const Constants = {
 //     VALUES (NEW.id, NEW.email);
 //     RETURN NEW;
 //   END;
+//   $function$
+//
+// FUNCTION is_active_user()
+//   CREATE OR REPLACE FUNCTION public.is_active_user()
+//    RETURNS boolean
+//    LANGUAGE sql
+//    SECURITY DEFINER
+//    SET search_path TO 'public'
+//   AS $function$
+//     SELECT COALESCE(
+//       (SELECT is_active FROM profiles WHERE id = auth.uid()),
+//       false
+//     );
 //   $function$
 //
 // FUNCTION is_admin()

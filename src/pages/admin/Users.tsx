@@ -30,44 +30,49 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
-import { Users as UsersIcon, UserPlus, Shield, User, Mail, Trash2 } from 'lucide-react'
+import { Users as UsersIcon, UserPlus, Shield, User, Mail, Trash2, Key, Check } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { inviteUser, deleteUser, toggleUserStatus } from '@/services/admin'
+import {
+  inviteUser,
+  deleteUser,
+  toggleUserStatus,
+  createUserWithPassword,
+  resetUserPassword,
+} from '@/services/admin'
 
 export default function AdminUsers() {
   const { user } = useAuth()
   const { profiles, fetchProfiles } = useDashboard()
+
+  // Create / Invite Form
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [role, setRole] = useState('user')
   const [loading, setLoading] = useState(false)
 
+  // Dialogs
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+
+  const [userToReset, setUserToReset] = useState<string | null>(null)
+  const [resetDialogOpen, setResetDialogOpen] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+
   const [actionLoading, setActionLoading] = useState(false)
 
-  const handleAddUser = async (e: React.FormEvent) => {
+  const handleInviteUser = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (!email) {
-      toast.error('Por favor, informe um e-mail válido.')
-      return
-    }
-
+    if (!email) return toast.error('Por favor, informe um e-mail válido.')
     setLoading(true)
-
     try {
       const { data, error } = await inviteUser(email, role)
-
       if (error) {
         toast.error(`Erro ao convidar: ${error.message}`)
       } else {
-        if (data?.warning) {
-          toast.warning(`Atenção: ${data.warning}`)
-        } else {
-          toast.success('Convite enviado com sucesso por e-mail!')
-        }
+        toast.success('Convite enviado com sucesso por e-mail!')
         setEmail('')
         setRole('user')
         await fetchProfiles()
@@ -79,9 +84,42 @@ export default function AdminUsers() {
     }
   }
 
-  const openDeleteDialog = (id: string) => {
-    setUserToDelete(id)
-    setDeleteDialogOpen(true)
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!email || !password) return toast.error('E-mail e senha são obrigatórios.')
+    if (password.length < 6) return toast.error('A senha deve ter no mínimo 6 caracteres.')
+
+    setLoading(true)
+    try {
+      await createUserWithPassword(email, password, role)
+      toast.success('Usuário criado com sucesso! Credenciais prontas para uso.')
+      setEmail('')
+      setPassword('')
+      setRole('user')
+      await fetchProfiles()
+    } catch (err: any) {
+      toast.error(`Erro ao criar usuário: ${err.message}`)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleConfirmReset = async () => {
+    if (!userToReset || !newPassword) return toast.error('Digite a nova senha.')
+    if (newPassword.length < 6) return toast.error('A senha deve ter no mínimo 6 caracteres.')
+
+    setActionLoading(true)
+    try {
+      await resetUserPassword(userToReset, newPassword)
+      toast.success('Senha atualizada com sucesso.')
+      setResetDialogOpen(false)
+      setNewPassword('')
+      setUserToReset(null)
+    } catch (err: any) {
+      toast.error(`Erro ao redefinir senha: ${err.message}`)
+    } finally {
+      setActionLoading(false)
+    }
   }
 
   const handleConfirmDelete = async () => {
@@ -130,48 +168,98 @@ export default function AdminUsers() {
             <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
               <CardTitle className="text-lg font-bold flex items-center gap-2">
                 <UserPlus className="w-5 h-5 text-primary" />
-                Convidar Novo Usuário
+                Novo Usuário
               </CardTitle>
-              <CardDescription>Envie um convite de acesso para a plataforma.</CardDescription>
             </CardHeader>
-            <CardContent className="p-6">
-              <form onSubmit={handleAddUser} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email">E-mail do Usuário</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    placeholder="usuario@exemplo.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="role">Nível de Acesso</Label>
-                  <Select value={role} onValueChange={setRole}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="user">Usuário Padrão</SelectItem>
-                      <SelectItem value="admin">Administrador</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <CardContent className="p-4 sm:p-6">
+              <Tabs defaultValue="manual" className="w-full">
+                <TabsList className="w-full mb-4 grid grid-cols-2">
+                  <TabsTrigger value="manual">Criar Manual</TabsTrigger>
+                  <TabsTrigger value="invite">Convidar</TabsTrigger>
+                </TabsList>
 
-                <div className="bg-muted/50 p-3 rounded-md flex items-start gap-2 border border-border/50">
-                  <Mail className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                  <p className="text-xs text-muted-foreground">
-                    O usuário receberá um e-mail com um link seguro para definir sua senha inicial e
-                    acessar a plataforma.
-                  </p>
-                </div>
+                <TabsContent value="manual">
+                  <form onSubmit={handleCreateUser} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>E-mail do Usuário</Label>
+                      <Input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Senha Inicial</Label>
+                      <Input
+                        type="text"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                        placeholder="Mínimo 6 caracteres"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nível de Acesso</Label>
+                      <Select value={role} onValueChange={setRole}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">Usuário Padrão</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="bg-muted/50 p-3 rounded-md flex items-start gap-2 border border-border/50">
+                      <Check className="w-4 h-4 text-success shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground">
+                        Criação direta sem depender de e-mail. Você deve fornecer as credenciais ao
+                        usuário.
+                      </p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Criando...' : 'Criar Usuário'}
+                    </Button>
+                  </form>
+                </TabsContent>
 
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Enviando...' : 'Enviar Convite'}
-                </Button>
-              </form>
+                <TabsContent value="invite">
+                  <form onSubmit={handleInviteUser} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label>E-mail do Usuário</Label>
+                      <Input
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nível de Acesso</Label>
+                      <Select value={role} onValueChange={setRole}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">Usuário Padrão</SelectItem>
+                          <SelectItem value="admin">Administrador</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="bg-muted/50 p-3 rounded-md flex items-start gap-2 border border-border/50">
+                      <Mail className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <p className="text-xs text-muted-foreground">
+                        O usuário receberá um link seguro para definir sua senha.
+                      </p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? 'Enviando...' : 'Enviar Convite'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </div>
@@ -185,20 +273,19 @@ export default function AdminUsers() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 overflow-x-auto flex-1">
-              <Table className="min-w-[650px]">
+              <Table className="min-w-[700px]">
                 <TableHeader className="bg-muted/10">
                   <TableRow>
                     <TableHead>E-mail</TableHead>
                     <TableHead>Perfil</TableHead>
                     <TableHead>Status</TableHead>
-                    <TableHead>Data de Criação</TableHead>
-                    <TableHead className="w-[80px]"></TableHead>
+                    <TableHead className="w-[120px] text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {profiles.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                      <TableCell colSpan={4} className="h-32 text-center text-muted-foreground">
                         Nenhum usuário encontrado.
                       </TableCell>
                     </TableRow>
@@ -239,26 +326,38 @@ export default function AdminUsers() {
                               </span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-muted-foreground text-sm">
-                            {p.created_at
-                              ? new Date(p.created_at).toLocaleDateString('pt-BR')
-                              : '-'}
-                          </TableCell>
                           <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                              onClick={() => openDeleteDialog(p.id)}
-                              disabled={isSelf}
-                              title={
-                                isSelf
-                                  ? 'Você não pode excluir sua própria conta'
-                                  : 'Excluir Usuário'
-                              }
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-primary hover:bg-primary/10"
+                                onClick={() => {
+                                  setUserToReset(p.id)
+                                  setResetDialogOpen(true)
+                                }}
+                                title="Redefinir Senha"
+                              >
+                                <Key className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                onClick={() => {
+                                  setUserToDelete(p.id)
+                                  setDeleteDialogOpen(true)
+                                }}
+                                disabled={isSelf}
+                                title={
+                                  isSelf
+                                    ? 'Não é possível excluir a própria conta'
+                                    : 'Excluir Usuário'
+                                }
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )
@@ -271,14 +370,42 @@ export default function AdminUsers() {
         </div>
       </div>
 
+      <AlertDialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Redefinir Senha</AlertDialogTitle>
+            <AlertDialogDescription>
+              Defina uma nova senha para este usuário. Ele poderá acessar imediatamente utilizando
+              esta credencial.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Label>Nova Senha</Label>
+            <Input
+              type="text"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Digite a nova senha..."
+              minLength={6}
+              className="mt-1"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={actionLoading}>Cancelar</AlertDialogCancel>
+            <Button onClick={handleConfirmReset} disabled={actionLoading || !newPassword}>
+              {actionLoading ? 'Salvando...' : 'Confirmar Senha'}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir Usuário</AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja excluir este usuário permanentemente? Todos os dados associados
-              a ele (receitas, despesas, orçamentos, etc) serão apagados do sistema em cascata e
-              esta ação não poderá ser desfeita.
+              a ele serão apagados do sistema e esta ação não poderá ser desfeita.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -289,7 +416,7 @@ export default function AdminUsers() {
                 handleConfirmDelete()
               }}
               disabled={actionLoading}
-              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              className="bg-destructive text-destructive-foreground"
             >
               {actionLoading ? 'Excluindo...' : 'Excluir Usuário'}
             </AlertDialogAction>

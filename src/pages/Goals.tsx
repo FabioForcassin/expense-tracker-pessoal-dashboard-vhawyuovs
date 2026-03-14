@@ -13,6 +13,7 @@ import {
   TableCell,
 } from '@/components/ui/table'
 import { DBGoal } from '@/types'
+import { cn } from '@/lib/utils'
 
 const MONTH_NAMES = [
   'Janeiro',
@@ -53,13 +54,36 @@ function GoalRow({
     }
   }
 
-  const isOverGoal = goal?.amount && spent > goal.amount
+  const orcamento = goal?.amount || 0
+  const isOverGoal = orcamento > 0 && spent > orcamento
+  const saldo = orcamento - spent
 
   return (
     <TableRow className="hover:bg-muted/30">
       <TableCell className="font-medium">{MONTH_NAMES[monthNum - 1]}</TableCell>
-      <TableCell className={`font-semibold ${isOverGoal ? 'text-destructive' : 'text-foreground'}`}>
-        {formatCurrency(spent)}
+      <TableCell className="min-w-[200px]">
+        <div className="flex flex-col gap-1 py-1">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-primary font-semibold">Orçado:</span>
+            <span>{formatCurrency(orcamento)}</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-muted-foreground font-medium">Realizado:</span>
+            <span>{formatCurrency(spent)}</span>
+          </div>
+          <div
+            className={cn(
+              'flex items-center justify-between text-xs font-bold pt-1 border-t border-border/50 mt-0.5',
+              isOverGoal ? 'text-destructive' : 'text-success',
+            )}
+          >
+            <span>Saldo:</span>
+            <span>
+              {saldo > 0 ? '+' : ''}
+              {formatCurrency(saldo)}
+            </span>
+          </div>
+        </div>
       </TableCell>
       <TableCell>
         <Input
@@ -103,8 +127,8 @@ export default function Goals() {
         </h2>
         <p className="text-muted-foreground text-sm mt-2 flex items-center gap-1.5">
           <Info className="w-4 h-4 opacity-70" />
-          Defina suas metas mensais e desafios de economia. As alterações são salvas automaticamente
-          ao sair do campo.
+          Defina suas metas mensais. O acompanhamento reflete instantaneamente as exclusões ou
+          adições no banco de dados.
         </p>
       </div>
 
@@ -112,12 +136,11 @@ export default function Goals() {
         <CardHeader className="bg-muted/30 border-b border-border/40 py-4">
           <CardTitle className="text-lg font-bold">Acompanhamento Anual</CardTitle>
           <CardDescription>
-            O "Orçamento/Realizado" reflete a soma consolidada de todas as despesas do mês
-            correspondente.
+            Acompanhe o Orçamento Planejado vs o Valor Realizado consolidado das suas despesas.
           </CardDescription>
         </CardHeader>
         <CardContent className="p-0 overflow-x-auto">
-          <Table className="min-w-[600px]">
+          <Table className="min-w-[700px]">
             <TableHeader className="bg-muted/10">
               <TableRow>
                 <TableHead className="w-[150px]">Mês</TableHead>

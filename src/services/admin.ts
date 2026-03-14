@@ -52,6 +52,24 @@ export const inviteUser = async (email: string, role: string) => {
   }
 }
 
+export const createUserWithPassword = async (email: string, password: string, role: string) => {
+  const { data, error } = await supabase.functions.invoke('manage-user', {
+    body: { action: 'create', email, password, role },
+  })
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
+export const resetUserPassword = async (userId: string, password: string) => {
+  const { data, error } = await supabase.functions.invoke('manage-user', {
+    body: { action: 'update_password', userId, password },
+  })
+  if (error) throw error
+  if (data?.error) throw new Error(data.error)
+  return data
+}
+
 export const deleteUser = async (userId: string) => {
   const { data, error } = await supabase.functions.invoke('manage-user', {
     body: { action: 'delete', userId },
