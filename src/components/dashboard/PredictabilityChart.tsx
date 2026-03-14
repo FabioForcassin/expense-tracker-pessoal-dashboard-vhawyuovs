@@ -6,35 +6,87 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  Cell,
-  LabelList,
+  Legend,
 } from 'recharts'
-import { useFilteredExpenses } from '@/stores/DashboardContext'
+import { useDashboard, useFilteredExpenses } from '@/stores/DashboardContext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
+import { ChartContainer, ChartTooltipContent, ChartLegendContent } from '@/components/ui/chart'
 import { CalendarClock } from 'lucide-react'
-import { formatCurrency } from '@/lib/format'
+
+const COLORS = [
+  'hsl(221, 83%, 53%)', // primary blue
+  'hsl(180, 70%, 40%)', // teal
+  'hsl(262, 83%, 58%)', // purple
+  'hsl(199, 89%, 48%)', // light blue
+  'hsl(280, 65%, 60%)', // violet
+  'hsl(160, 84%, 39%)', // emerald
+  'hsl(230, 60%, 45%)', // dark blue
+]
+
+const sanitizeKey = (key: string) => key.replace(/[^a-zA-Z0-9_]/g, '_')
+
+const monthNames: Record<string, string> = {
+  '01': 'Jan',
+  '02': 'Fev',
+  '03': 'Mar',
+  '04': 'Abr',
+  '05': 'Mai',
+  '06': 'Jun',
+  '07': 'Jul',
+  '08': 'Ago',
+  '09': 'Set',
+  '10': 'Out',
+  '11': 'Nov',
+  '12': 'Dez',
+}
 
 export function PredictabilityChart() {
+  const { selectedYear } = useDashboard()
+  // Bypass month filter to get all timeline data, but respects Category and Account filters
   const allExpenses = useFilteredExpenses(false).filter((e) => e.primaryCategory !== 'Receitas')
 
-  // Future expenses logic
   const now = new Date()
-  const futureExpenses = allExpenses.filter((e) => new Date(e.date) > now)
+  now.setHours(0, 0, 0, 0)
 
-  const groups: Record<string, number> = {}
+  // 1. Filter only future transactions
+  let futureExpenses = allExpenses.filter((e) => new Date(e.date) > now)
+
+  // 2. Project from selected year and into the future
+  if (selectedYear) {
+    futureExpenses = futureExpenses.filter((e) => e.date >= `${selectedYear}-01-01`)
+  }
+
+  // 3. Group by Month and Payment Method
+  const methods = new Set<string>()
+  const monthGroups: Record<string, Record<string, number>> = {}
+
   futureExpenses.forEach((e) => {
-    const acc = e.paymentMethod || 'Outros'
-    groups[acc] = (groups[acc] || 0) + e.value
+    const monthStr = e.date.substring(0, 7) // YYYY-MM
+    const method = e.paymentMethod || 'Outros'
+    methods.add(method)
+
+    if (!monthGroups[monthStr]) monthGroups[monthStr] = {}
+    monthGroups[monthStr][method] = (monthGroups[monthStr][method] || 0) + e.value
   })
 
-  const data = Object.entries(groups)
-    .map(([name, value]) => ({ name, value, fill: 'hsl(var(--chart-4))' }))
-    .sort((a, b) => b.value - a.value)
+  const sortedMonths = Object.keys(monthGroups).sort()
 
-  const chartConfig = {
-    value: { label: 'Compromisso' },
-  }
+  const data = sortedMonths.map((monthStr) => {
+    const [y, m] = monthStr.split('-')
+    const item: Record<string, any> = { name: `${monthNames[m]} ${y.slice(2)}`, rawMonth: monthStr }
+    Array.from(methods).forEach((method) => {
+      item[sanitizeKey(method)] = monthGroups[monthStr][method] || 0
+    })
+    return item
+  })
+
+  const chartConfig: Record<string, any> = {}
+  Array.from(methods).forEach((method, idx) => {
+    chartConfig[sanitizeKey(method)] = {
+      label: method,
+      color: COLORS[idx % COLORS.length],
+    }
+  })
 
   return (
     <Card className="glass h-full flex flex-col border-l-4 border-l-chart-4">
@@ -56,39 +108,45 @@ export function PredictabilityChart() {
         ) : (
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart
-                data={data}
-                layout="vertical"
-                margin={{ top: 0, right: 60, left: 0, bottom: 0 }}
-              >
+              <BarChart data={data} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid
-                  horizontal={true}
                   vertical={false}
                   strokeDasharray="3 3"
-                  opacity={0.4}
+                  stroke="hsl(var(--border))"
+                  opacity={0.5}
                 />
-                <XAxis type="number" hide />
-                <YAxis
+                <XAxis
                   dataKey="name"
-                  type="category"
-                  width={100}
                   tickLine={false}
                   axisLine={false}
+                  tickMargin={10}
+                  className="text-xs font-medium fill-muted-foreground"
+                />
+                <YAxis
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) =>
+                    `R$${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`
+                  }
                   className="text-xs font-medium"
                 />
-                <Tooltip content={<ChartTooltipContent />} />
-                <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={28}>
-                  {data.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                  <LabelList
-                    dataKey="value"
-                    position="right"
-                    formatter={(val: number) => formatCurrency(val)}
-                    className="font-semibold text-xs fill-foreground"
-                    offset={8}
-                  />
-                </Bar>
+                <Tooltip
+                  content={<ChartTooltipContent />}
+                  cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
+                />
+                <Legend content={<ChartLegendContent />} />
+                {Array.from(methods).map((method) => {
+                  const key = sanitizeKey(method)
+                  return (
+                    <Bar
+                      key={key}
+                      dataKey={key}
+                      stackId="a"
+                      fill={`var(--color-${key})`}
+                      maxBarSize={40}
+                    />
+                  )
+                })}
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
